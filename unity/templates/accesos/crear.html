@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Registro de Acceso - Sistema de Control de Acceso{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Encabezado de la página -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="header-text">
+                <h1>Crear Registro de Acceso</h1>
+                <p>Registrar nueva entrada o salida del sistema</p>
+            </div>
+        </div>
+        
+        <div class="header-actions">
+            <a href="{% url 'appi:lista_accesos' %}" class="btn-custom btn-secondary-custom hover-lift">
+                <i class="fas fa-arrow-left"></i>
+                Volver a Lista
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulario de creación -->
+    <div class="card-custom glass-effect">
+        <div class="card-header-custom">
+            <h3><i class="fas fa-clipboard-check"></i> Información del Registro</h3>
+        </div>
+        <div class="card-body-custom">
+            <form method="post" class="form-custom js-confirm" data-confirm-title="Crear Registro" data-confirm-text="¿Deseas crear este registro de acceso?" data-confirm-icon="question">
+                {% csrf_token %}
+                
+                <!-- Mostrar errores generales -->
+                {% if form.non_field_errors %}
+                    <div class="alert-custom alert-danger-custom">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="form-grid">
+                    <!-- Usuario -->
+                    <div class="form-group-custom">
+                        <label for="{{ form.usuario.id_for_label }}" class="form-label-custom">
+                            <i class="fas fa-user"></i>
+                            Usuario *
+                        </label>
+                        <select name="{{ form.usuario.name }}" id="{{ form.usuario.id_for_label }}" 
+                                class="form-control-custom {% if form.usuario.errors %}error{% endif %}" required>
+                            <option value="">Seleccionar usuario...</option>
+                            {% for usuario in usuarios %}
+                                <option value="{{ usuario.id }}" 
+                                        {% if form.usuario.value == usuario.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ usuario.nombre_completo }} - {{ usuario.numero_documento }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.usuario.errors %}
+                            <div class="error-message">
+                                {% for error in form.usuario.errors %}
+                                    <span><i class="fas fa-exclamation-circle"></i> {{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Selecciona el usuario que está registrando el acceso</small>
+                    </div>
+
+                    <!-- Tipo de Acceso -->
+                    <div class="form-group-custom">
+                        <label for="{{ form.tipo_acceso.id_for_label }}" class="form-label-custom">
+                            <i class="fas fa-exchange-alt"></i>
+                            Tipo de Acceso *
+                        </label>
+                        <select name="{{ form.tipo_acceso.name }}" id="{{ form.tipo_acceso.id_for_label }}" 
+                                class="form-control-custom {% if form.tipo_acceso.errors %}error{% endif %}" required>
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="entrada" {% if form.tipo_acceso.value == 'entrada' %}selected{% endif %}>
+                                Entrada
+                            </option>
+                            <option value="salida" {% if form.tipo_acceso.value == 'salida' %}selected{% endif %}>
+                                Salida
+                            </option>
+                        </select>
+                        {% if form.tipo_acceso.errors %}
+                            <div class="error-message">
+                                {% for error in form.tipo_acceso.errors %}
+                                    <span><i class="fas fa-exclamation-circle"></i> {{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Indica si es una entrada o salida del sistema</small>
+                    </div>
+
+                    <!-- Fecha y Hora -->
+                    <div class="form-group-custom">
+                        <label for="{{ form.fecha_hora.id_for_label }}" class="form-label-custom">
+                            <i class="fas fa-calendar-alt"></i>
+                            Fecha y Hora
+                        </label>
+                        <input type="datetime-local" 
+                               name="{{ form.fecha_hora.name }}" 
+                               id="{{ form.fecha_hora.id_for_label }}"
+                               value="{{ form.fecha_hora.value|default:'' }}"
+                               class="form-control-custom {% if form.fecha_hora.errors %}error{% endif %}">
+                        {% if form.fecha_hora.errors %}
+                            <div class="error-message">
+                                {% for error in form.fecha_hora.errors %}
+                                    <span><i class="fas fa-exclamation-circle"></i> {{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Si no se especifica, se usará la fecha y hora actual</small>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="form-group-custom full-width">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label-custom">
+                            <i class="fas fa-sticky-note"></i>
+                            Observaciones
+                        </label>
+                        <textarea name="{{ form.observaciones.name }}" 
+                                  id="{{ form.observaciones.id_for_label }}"
+                                  rows="4"
+                                  placeholder="Observaciones adicionales sobre el registro de acceso..."
+                                  class="form-control-custom {% if form.observaciones.errors %}error{% endif %}">{{ form.observaciones.value|default:'' }}</textarea>
+                        {% if form.observaciones.errors %}
+                            <div class="error-message">
+                                {% for error in form.observaciones.errors %}
+                                    <span><i class="fas fa-exclamation-circle"></i> {{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Información adicional sobre el registro (opcional)</small>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="form-actions">
+                    <button type="submit" class="btn-custom btn-success-custom hover-lift">
+                        <i class="fas fa-save"></i>
+                        Crear Registro
+                    </button>
+                    <a href="{% url 'appi:lista_accesos' %}" class="btn-custom btn-secondary-custom">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="card-custom glass-effect">
+        <div class="card-header-custom">
+            <h3><i class="fas fa-info-circle"></i> Información Importante</h3>
+        </div>
+        <div class="card-body-custom">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>Fecha y Hora Automática</h4>
+                        <p>Si no especificas una fecha y hora, el sistema registrará automáticamente el momento actual.</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>Validación de Usuario</h4>
+                        <p>Solo se pueden registrar accesos para usuarios activos en el sistema.</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>Historial Completo</h4>
+                        <p>Todos los registros quedan almacenados permanentemente para auditoría.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-completar fecha y hora actual si está vacío
+    const fechaHoraInput = document.getElementById('{{ form.fecha_hora.id_for_label }}');
+    if (fechaHoraInput && !fechaHoraInput.value) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        fechaHoraInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    // Mejorar la experiencia del selector de usuario
+    const usuarioSelect = document.getElementById('{{ form.usuario.id_for_label }}');
+    if (usuarioSelect) {
+        usuarioSelect.addEventListener('change', function() {
+            if (this.value) {
+                this.classList.add('selected');
+            } else {
+                this.classList.remove('selected');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

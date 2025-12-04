@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registros por Usuario{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="header-text">
+                <h1>Registros por Usuario</h1>
+                <p>Resumen de entradas y salidas organizadas por usuario</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'appi:lista_accesos' %}" class="btn-custom btn-secondary-custom">
+                <i class="fas fa-list"></i>
+                Ver Registros
+            </a>
+        </div>
+    </div>
+
+    <div class="card-custom glass-effect">
+        <div class="card-header-custom">
+            <h3><i class="fas fa-user-friends"></i> Usuarios</h3>
+        </div>
+        <div class="card-body-custom">
+            <div class="table-container">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Documento</th>
+                            <th>Entradas</th>
+                            <th>Salidas</th>
+                            <th>Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in resumen %}
+                        <tr>
+                            <td>{{ item.usuario.nombre_completo }}</td>
+                            <td>{{ item.usuario.numero_documento }}</td>
+                            <td><span class="badge-custom badge-success-custom">{{ item.entradas }}</span></td>
+                            <td><span class="badge-custom badge-danger-custom">{{ item.salidas }}</span></td>
+                            <td><span class="badge-custom badge-info-custom">{{ item.total }}</span></td>
+                            <td style="display:flex; gap:.5rem; flex-wrap:wrap;">
+                                <a href="{% url 'appi:detalle_usuario' item.usuario.id %}" class="btn-custom btn-primary-custom">
+                                    <i class="fas fa-eye"></i>
+                                    Detalle
+                                </a>
+                                <a href="{% url 'appi:informe_usuario_pdf' item.usuario.numero_documento %}" class="btn-custom btn-secondary-custom">
+                                    <i class="fas fa-file-pdf"></i>
+                                    Descargar PDF
+                                </a>
+                                <a href="{% url 'appi:lista_accesos' %}?usuario={{ item.usuario.numero_documento }}" class="btn-custom btn-success-custom">
+                                    <i class="fas fa-filter"></i>
+                                    Ver Registros
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

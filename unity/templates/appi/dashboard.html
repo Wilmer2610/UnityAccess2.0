@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Unity Access{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+    <!-- Header del Dashboard -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <h1 class="card-title-custom text-gradient">Panel de Control</h1>
+        </div>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
+            Bienvenido al sistema de control de acceso Unity Access. Gestiona usuarios y monitorea la actividad del sistema.
+        </p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+        <div class="stats-card-custom hover-lift">
+            <div class="stats-icon-custom">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stats-number">{{ usuarios_activos }}</div>
+            <div class="stats-label">Usuarios Activos</div>
+        </div>
+        
+        <div class="stats-card-custom hover-lift">
+            <div class="stats-icon-custom">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="stats-number">{{ total_usuarios }}</div>
+            <div class="stats-label">Total Usuarios</div>
+        </div>
+        
+        <div class="stats-card-custom hover-lift">
+            <div class="stats-icon-custom">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stats-number">{{ accesos_hoy }}</div>
+            <div class="stats-label">Accesos Hoy</div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <h2 class="card-title-custom">Acciones Rápidas</h2>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <a href="{% url 'appi:lista_usuarios' %}" class="btn-custom btn-primary-custom hover-lift">
+                <i class="fas fa-users"></i>
+                Ver Usuarios
+            </a>
+            <a href="{% url 'appi:crear_usuario' %}" class="btn-custom btn-success-custom hover-lift">
+                <i class="fas fa-user-plus"></i>
+                Crear Usuario
+            </a>
+            <a href="/admin/" class="btn-custom btn-secondary-custom hover-lift">
+                <i class="fas fa-cog"></i>
+                Administración
+            </a>
+        </div>
+    </div>
+
+    <!-- Usuarios Recientes -->
+    {% if usuarios_recientes %}
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-history"></i>
+            </div>
+            <h2 class="card-title-custom">Usuarios Recientes</h2>
+        </div>
+        
+        <div class="table-custom">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Estado</th>
+                        <th>Fecha Registro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios_recientes %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 40px; height: 40px; background: var(--gradient-tech); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                    {{ usuario.nombres|first }}{{ usuario.apellidos|first }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--white);">{{ usuario.nombre_completo }}</div>
+                                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">{{ usuario.telefono|default:"Sin teléfono" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ usuario.email }}</td>
+                        <td>
+                            {% if usuario.estado == 'activo' %}
+                                <span class="badge-custom badge-success-custom">Activo</span>
+                            {% else %}
+                                <span class="badge-custom badge-danger-custom">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ usuario.fecha_registro|date:"d/m/Y" }}</td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{% url 'appi:detalle_usuario' usuario.id %}" class="btn-custom btn-secondary-custom" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'appi:editar_usuario' usuario.id %}" class="btn-custom btn-warning-custom" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

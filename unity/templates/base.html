@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Unity Access{% endblock %}</title>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    {% load static %}
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'js/confirmations.js' %}"></script>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar Personalizada -->
+    {% if user.is_authenticated %}
+    <nav class="navbar-custom">
+        <div class="main-container">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <a class="navbar-brand-custom" href="{% url 'appi:dashboard' %}">
+                    <img src="{% static 'imagen/logo.png' %}" alt="Unity Access Logo" class="brand-logo">
+                </a>
+                
+                <div style="display: flex;  align-items: center; gap: 1rem;">
+                    <a  style="text-decoration: none;" class="nav-link-custom" href="{% url 'appi:dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Inicio                    </a>
+                    <a style="text-decoration: none;"  class="nav-link-custom" href="{% url 'appi:lista_usuarios' %}">
+                        <i class="fas fa-users"></i>
+                        Usuarios
+                    </a>
+                    <a style="text-decoration: none;"  class="nav-link-custom" href="{% url 'appi:control_qr' %}">
+                        <i class="fas fa-qrcode"></i>
+                        Control QR
+                    </a>
+                    <div style="position: relative; display: inline-block;">
+                        <button class="nav-link-custom" style="background: none; border: none; cursor: pointer;" onclick="toggleDropdown()">
+                            <i class="fas fa-user-circle"></i>
+                            {{ user.username }}
+                            <i class="fas fa-chevron-down" style="margin-left: 0.5rem; font-size: 0.8rem;"></i>
+                        </button>
+                        <div id="userDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 0.5rem 0; min-width: 200px; z-index: 1000; margin-top: 0.5rem;">
+                            <a href="/admin/" style="display: block; padding: 0.75rem 1.5rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(59, 130, 246, 0.1)'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='rgba(255, 255, 255, 0.8)'">
+                                <i class="fas fa-cog" style="margin-right: 0.5rem;"></i>Administración
+                            </a>
+                            <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: 0.5rem 0;"></div>
+                            <a href="{% url 'appi:logout' %}" style="display: block; padding: 0.75rem 1.5rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#fca5a5'" onmouseout="this.style.background='transparent'; this.style.color='rgba(255, 255, 255, 0.8)'">>
+                                <i class="fas fa-sign-out-alt" style="margin-right: 0.5rem;"></i>Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Mensajes del sistema como toasts -->
+    <div class="main-container">
+        {% if messages %}
+            <div id="django-messages" style="display:none;">
+                {% for message in messages %}
+                    <div data-level="{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Contenido Principal -->
+    <main class="main-container fade-in-up">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-custom">
+        <div class="main-container">
+            <p>&copy; 2024 Unity Access. Sistema de Control de Acceso Profesional.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript personalizado -->
+    <script>
+        function toggleDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            if (!dropdown) return; // Guard: no dropdown on login or when not authenticated
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+    
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            if (!dropdown) return; // Guard: evita TypeError cuando no existe
+            const button = event.target.closest('button');
+            
+            if (!button || !button.onclick) {
+                dropdown.style.display = 'none';
+            }
+        });
+    
+        // Animaciones de entrada
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.fade-in-up');
+            elements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+    {% if not user.is_authenticated %}
+    <script>
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

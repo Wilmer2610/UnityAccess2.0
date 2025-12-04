@@ -1,0 +1,483 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Control de Acceso QR{% endblock %}
+
+{% block extra_css %}
+<style>
+    .scanner-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .scanner-card {
+        background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+        border-radius: var(--border-radius-lg);
+        padding: 30px;
+        box-shadow: var(--shadow-lg);
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .scanner-card h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .scanner-card p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .video-container {
+        position: relative;
+        background: #000;
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    #video {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+    }
+    
+    .scanner-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 250px;
+        height: 250px;
+        border: 3px solid var(--accent-color);
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(96, 165, 250, 0.35);
+        animation: pulse 2s infinite;
+    }
+
+    .result-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        pointer-events: none;
+        padding: 16px;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 20px rgba(96, 165, 250, 0.35); }
+        50% { box-shadow: 0 0 30px rgba(96, 165, 250, 0.55); }
+        100% { box-shadow: 0 0 20px rgba(96, 165, 250, 0.35); }
+    }
+    
+    .controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+    
+    .btn-scanner {
+        padding: 12px 30px;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-start {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .btn-start:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .btn-stop {
+        background: linear-gradient(135deg, #dc3545, #e74c3c);
+        color: white;
+    }
+    
+    .btn-stop:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+    }
+    
+    .result-container {
+        margin-top: 20px;
+    }
+    
+    .result-card {
+        border-radius: 20px;
+        padding: 18px 20px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        animation: slideIn 0.25s ease;
+        max-width: 85%;
+        pointer-events: auto;
+        background: rgba(17,24,39,0.88);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #e5e7eb;
+    }
+    
+    .result-success {
+        border: 1px solid rgba(16,185,129,0.35);
+        box-shadow: 0 0 0 2px rgba(16,185,129,0.15) inset;
+    }
+    
+    .result-error {
+        border: 1px solid rgba(239,68,68,0.35);
+        box-shadow: 0 0 0 2px rgba(239,68,68,0.15) inset;
+    }
+    
+    .user-info {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .info-item {
+        background: rgba(255,255,255,0.08);
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .info-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #9ca3af;
+        margin-bottom: 6px;
+    }
+    
+    .info-value {
+        font-size: 1rem;
+        color: #e5e7eb;
+    }
+    .result-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .result-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+    .type-pill {
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+    }
+    .type-pill.success {
+        background: rgba(16,185,129,0.18);
+        color: #34d399;
+        border: 1px solid rgba(16,185,129,0.4);
+    }
+    .type-pill.error {
+        background: rgba(239,68,68,0.18);
+        color: #f87171;
+        border: 1px solid rgba(239,68,68,0.4);
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+    
+    .status-waiting {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .status-scanning {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="scanner-container">
+    <div class="scanner-card">
+        <h1><i class="fas fa-qrcode"></i> Control de Acceso QR</h1>
+        <p>Escanea el código QR para verificar el acceso</p>
+    </div>
+    
+    <div class="status-indicator status-waiting" id="statusIndicator">
+        <i class="fas fa-clock"></i>
+        <span>Esperando activación de cámara...</span>
+    </div>
+    
+    <div class="video-container">
+        <video id="video" autoplay muted playsinline></video>
+        <div class="scanner-overlay"></div>
+        <div class="result-overlay" id="resultOverlay"></div>
+    </div>
+    
+    <div class="controls">
+        <button class="btn-scanner btn-start" id="startBtn">
+            <i class="fas fa-play"></i>
+            Iniciar Escáner
+        </button>
+        <button class="btn-scanner btn-stop" id="stopBtn" style="display: none;">
+            <i class="fas fa-stop"></i>
+            Detener Escáner
+        </button>
+    </div>
+    
+    <div class="result-container" id="resultContainer"></div>
+</div>
+
+<canvas id="canvas" style="display: none;"></canvas>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let context = canvas.getContext('2d');
+let startBtn = document.getElementById('startBtn');
+let stopBtn = document.getElementById('stopBtn');
+let resultContainer = document.getElementById('resultContainer');
+let resultOverlay = document.getElementById('resultOverlay');
+let statusIndicator = document.getElementById('statusIndicator');
+let videoContainer = document.querySelector('.video-container');
+let scanning = false;
+let stream = null;
+let restartTimeout = null;
+
+startBtn.addEventListener('click', startScanner);
+stopBtn.addEventListener('click', stopScanner);
+
+async function startScanner() {
+    try {
+        if (restartTimeout) { clearTimeout(restartTimeout); restartTimeout = null; }
+        videoContainer.style.display = '';
+        video.style.visibility = 'visible';
+        resultOverlay.innerHTML = '';
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        });
+        
+        video.srcObject = stream;
+        scanning = true;
+        
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'flex';
+        
+        updateStatus('scanning', 'Escaneando códigos QR...');
+        
+        requestAnimationFrame(scanQR);
+        
+    } catch (err) {
+        console.error('Error accessing camera:', err);
+        showResult(false, 'Error al acceder a la cámara. Verifica los permisos.');
+    }
+}
+
+function stopScanner() {
+    scanning = false;
+    
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    video.srcObject = null;
+    
+    startBtn.style.display = 'flex';
+    stopBtn.style.display = 'none';
+    
+    updateStatus('waiting', 'Esperando activación de cámara...');
+}
+
+function scanQR() {
+    if (!scanning) return;
+    
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        
+        if (code) {
+            console.log('QR Code detected:', code.data);
+            processQRCode(code.data);
+            return; // Stop scanning after detecting a code
+        }
+    }
+    
+    requestAnimationFrame(scanQR);
+}
+
+async function processQRCode(qrData) {
+    updateStatus('scanning', 'Verificando código QR...');
+    
+    try {
+        const response = await fetch('{% url "appi:api_verificar_qr" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                codigo_qr: qrData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showResult(true, result.message, result.usuario);
+        } else {
+            showResult(false, result.message);
+        }
+        
+        hideCameraAfterScan();
+        
+    } catch (error) {
+        console.error('Error processing QR:', error);
+        showResult(false, 'Error de conexión. Intenta nuevamente.');
+        
+        hideCameraAfterScan();
+    }
+}
+
+function showResult(success, message, userData = null) {
+    const resultCard = document.createElement('div');
+    resultCard.className = `result-card ${success ? 'result-success' : 'result-error'}`;
+    
+    let content = `
+        <div class="result-header">
+            <div class="result-title">
+                <i class="fas ${success ? 'fa-check-circle' : 'fa-times-circle'}" style="font-size: 1.35rem;"></i>
+                <span>${success ? (userData?.tipo_acceso === 'salida' ? 'Salida Registrada' : 'Entrada Registrada') : 'Acceso Denegado'}</span>
+            </div>
+            <div class="type-pill ${success ? 'success' : 'error'}">${success ? (userData?.tipo_acceso === 'salida' ? 'Salida' : 'Entrada') : 'Error'}</div>
+        </div>
+        <div style="font-size: .95rem; color: #9ca3af; font-weight: 600;">${message}</div>
+    `;
+    
+    if (success && userData) {
+        content += `
+            <div class="user-info">
+                <div class="info-item">
+                    <div class="info-label">Nombre Completo</div>
+                    <div class="info-value">${userData.nombre_completo}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Documento</div>
+                    <div class="info-value">${userData.numero_documento}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Hora</div>
+                    <div class="info-value">${userData.hora}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Fecha</div>
+                    <div class="info-value">${userData.fecha}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    resultCard.innerHTML = content;
+    
+    // Limpiar cualquier tarjeta anterior y mostrar solo una
+    resultOverlay.innerHTML = '';
+    resultOverlay.appendChild(resultCard);
+    
+    // Auto-remove result after 3 seconds
+    setTimeout(() => {
+        if (resultCard.parentNode) {
+            resultCard.style.animation = 'slideOut 0.5s ease';
+            setTimeout(() => {
+                if (resultCard.parentNode) {
+                    resultCard.remove();
+                }
+            }, 500);
+        }
+    }, 20000);
+}
+
+function updateStatus(type, message) {
+    statusIndicator.className = `status-indicator status-${type}`;
+    statusIndicator.innerHTML = `
+        <i class="fas ${type === 'waiting' ? 'fa-clock' : 'fa-search'}"></i>
+        <span>${message}</span>
+    `;
+}
+
+function hideCameraAfterScan() {
+    stopScanner();
+    video.style.visibility = 'hidden';
+    restartTimeout = setTimeout(() => {
+        startScanner();
+    }, 2000);
+}
+
+// Add slideOut animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

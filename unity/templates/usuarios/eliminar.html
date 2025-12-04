@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Usuario - Sistema de Control de Acceso{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+    <!-- Header de la página -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h1 class="card-title-custom text-gradient">Confirmar Eliminación</h1>
+        </div>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
+            Estás a punto de eliminar permanentemente al usuario <strong style="color: var(--accent-color);">{{ usuario.nombre_completo }}</strong>.
+        </p>
+    </div>
+
+    <!-- Advertencia -->
+    <div class="alert-custom alert-danger-custom" style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545;"></i>
+            <div>
+                <h3 style="color: #dc3545; margin: 0 0 0.5rem 0; font-size: 1.2rem;">¡Atención!</h3>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
+                    Esta acción no se puede deshacer. Una vez eliminado, toda la información del usuario se perderá permanentemente.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del usuario a eliminar -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-user"></i>
+            </div>
+            <h2 class="card-title-custom">Información del Usuario</h2>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <div class="info-item-custom">
+                    <label class="info-label-custom">Nombre Completo</label>
+                    <div class="info-value-custom">{{ usuario.nombre_completo }}</div>
+                </div>
+                <div class="info-item-custom">
+                    <label class="info-label-custom">Documento</label>
+                    <div class="info-value-custom">{{ usuario.get_tipo_documento_display }} {{ usuario.numero_documento }}</div>
+                </div>
+                <div class="info-item-custom">
+                    <label class="info-label-custom">Correo Electrónico</label>
+                    <div class="info-value-custom">{{ usuario.email }}</div>
+                </div>
+                <div class="info-item-custom">
+                    <label class="info-label-custom">Estado</label>
+                    <div class="info-value-custom">
+                        {% if usuario.estado == 'activo' %}
+                            <span class="badge-custom badge-success-custom">
+                                <i class="fas fa-check-circle"></i>
+                                Activo
+                            </span>
+                        {% else %}
+                            <span class="badge-custom badge-danger-custom">
+                                <i class="fas fa-times-circle"></i>
+                                Inactivo
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de confirmación -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                <i class="fas fa-trash"></i>
+            </div>
+            <h2 class="card-title-custom">Confirmación de Eliminación</h2>
+        </div>
+
+        <form method="post" class="form-custom js-confirm" data-confirm-title="Eliminar Usuario" data-confirm-text="¿Seguro que deseas eliminar este usuario? Esta acción no se puede deshacer." data-confirm-icon="warning">
+            {% csrf_token %}
+            
+            <div style="background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <i class="fas fa-shield-alt" style="color: #dc3545; font-size: 1.5rem;"></i>
+                    <h3 style="color: #dc3545; margin: 0; font-size: 1.1rem;">Confirmación Requerida</h3>
+                </div>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.9); line-height: 1.6;">
+                    Para confirmar la eliminación, por favor verifica que entiendes las consecuencias de esta acción:
+                </p>
+                <ul style="margin: 1rem 0 0 1.5rem; color: rgba(255, 255, 255, 0.8);">
+                    <li>Se eliminará toda la información personal del usuario</li>
+                    <li>Se perderán todos los registros de acceso asociados</li>
+                    <li>Esta acción no se puede revertir</li>
+                </ul>
+            </div>
+
+            <!-- Botones de acción -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <a href="{% url 'appi:detalle_usuario' usuario.id %}" class="btn-custom btn-info-custom hover-lift">
+                    <i class="fas fa-eye"></i>
+                    Ver Detalle
+                </a>
+                <a href="{% url 'appi:lista_usuarios' %}" class="btn-custom btn-secondary-custom hover-lift">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-custom btn-danger-custom hover-lift">
+                    <i class="fas fa-trash"></i>
+                    Eliminar Usuario
+                </button>
+                <a href="{% url 'appi:detalle_usuario' usuario.id %}" class="btn-custom btn-secondary-custom">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

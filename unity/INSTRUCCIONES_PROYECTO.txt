@@ -1,0 +1,83 @@
+UnityAccess – Instrucciones del Proyecto (Windows)
+
+1) Requisitos
+- Python 3.10+ instalado y agregado al PATH
+- Pip para instalar paquetes
+- Navegador moderno (Chrome/Edge/Firefox)
+
+Paquetes Python necesarios
+- django
+- reportlab
+
+Instalación rápida (PowerShell)
+python -m pip install --upgrade pip
+pip install django reportlab
+
+2) Cómo iniciar el servidor
+Desde la carpeta “unity” (donde está manage.py):
+- Inicializar base de datos: python manage.py migrate
+- Crear superusuario: python manage.py createsuperuser
+- Ejecutar servidor: python manage.py runserver
+
+Direcciones principales
+- Login: /appi/login/
+- Dashboard: /appi/dashboard/
+- Usuarios (lista): /appi/usuarios/
+- Control QR: /appi/control-qr/
+- Registros de Acceso (lista): /appi/accesos/
+- Admin Django: /admin/
+
+3) Qué hace el sistema
+- Autenticación: acceso mediante usuario/contraseña. El navbar solo aparece autenticado.
+- Usuarios: crear, editar, eliminar y ver detalle; filtro por estado y búsqueda.
+- Control de Acceso con QR: registra entrada/salida alternando automáticamente por usuario.
+- Registros: historial general y por usuario; se guardan en la base de datos.
+- Informe PDF: descarga un reporte por usuario con resumen semanal (entradas, salidas, total) y logo.
+- Cache y seguridad: vistas protegidas con “no cache” para evitar reabrir sesión con el botón atrás.
+
+4) Flujo de QR
+- Contenido esperado del QR: número de documento del usuario.
+- Si el usuario está “activo”, al escanear se registra entrada o salida alternada.
+- Respuesta del API incluye nombre, documento, tipo de acceso, fecha y hora.
+
+5) Estructura y archivos clave
+- manage.py: comandos de Django.
+- unity/appi/models.py: modelos Usuario y RegistroAcceso.
+- unity/appi/views.py: vistas (login, dashboard, CRUD usuarios, accesos, QR, PDF).
+- unity/templates/**: plantillas HTML (base, login, usuarios, accesos, control_qr).
+- unity/static/**: CSS/JS e imágenes (logo en static/imagen/logo.png).
+
+6) Uso común
+- Crear usuario: menú Usuarios → “Nuevo Usuario”.
+- Editar usuario: botón editar en lista o detalle.
+- Estado del usuario: “activo” o “inactivo”; solo activos registran accesos por QR.
+- Ver accesos: menú Accesos → filtros por fecha, tipo y usuario.
+- Descargar PDF: detalle de usuario → “Descargar Informe PDF”.
+
+7) Personalización
+- Logo: colocar archivo en static/imagen/logo.png (PNG recomendado).
+- Estilos: editar static/css/style.css.
+- Textos y vistas: editar en unity/templates/.
+
+8) Administración
+- /admin/ para administración avanzada.
+- Asignar permisos (staff/superuser) para acceder al dashboard.
+
+9) Consejos y problemas comunes
+- Si no puedes iniciar sesión: crea superusuario y verifica credenciales.
+- Si QR no registra: confirma que el documento del usuario coincide con el QR y que está activo.
+- Si no se ve el logo en PDF: revisar ruta static/imagen/logo.png.
+- Si el botón atrás reabre páginas: ya se fuerza recarga y se deshabilita cache en vistas.
+
+10) Copia de seguridad
+- Base de datos por defecto: db.sqlite3 en la carpeta del proyecto.
+- Haz backup de db.sqlite3 periódicamente si es ambiente de producción.
+
+11) Puesta en producción (simplificada)
+- Usar servidor WSGI/ASGI (gunicorn/uvicorn) detrás de Nginx/IIS.
+- Configurar DEBUG=False y SECRET_KEY seguro en settings.
+- Servir static con collectstatic y un servidor de archivos estáticos.
+
+12) Soporte
+- Para extender funcionalidades (nuevos reportes, gráficas, APIs), editar views y templates.
+- Para errores del navegador, abrir la consola para ver mensajes.

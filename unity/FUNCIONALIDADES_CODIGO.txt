@@ -1,0 +1,106 @@
+UnityAccess – Explicación de funcionalidades del código
+
+1) Estructura general
+- Módulo de aplicación: `appi/` contiene modelos, formularios y vistas.
+- Plantillas: `templates/` contiene `base.html`, páginas de usuarios, accesos, login y control QR.
+- Estáticos: `static/` contiene `css/style.css`, `js/confirmations.js` e imágenes (`imagen/logo.png`).
+
+2) Modelos (datos)
+- Usuario: `unity/appi/models.py:5`
+  - Campos: documento, tipo, nombres, apellidos, email, teléfono, estado, fechas.
+  - Estados permitidos: `activo` y `inactivo` (`unity/appi/models.py:13–16`).
+  - Orden por apellidos y nombres (`unity/appi/models.py:31`).
+  - Propiedad `nombre_completo` (`unity/appi/models.py:36–38`).
+- RegistroAcceso: `unity/appi/models.py:41`
+  - Campos: `usuario` (FK por número de documento), `fecha_hora`, `tipo_acceso` (`entrada/salida`), `observaciones`.
+  - Orden por fecha descendente (`unity/appi/models.py:55`).
+
+3) Formularios
+- `UsuarioForm`: `unity/appi/forms.py:4`
+  - Widgets y labels amigables (`unity/appi/forms.py:11–44`).
+  - Validaciones: documento solo dígitos (`unity/appi/forms.py:45–49`); email único (`unity/appi/forms.py:51–55`).
+- `RegistroAccesoForm`: `unity/appi/forms.py:57` con selects y textarea (`unity/appi/forms.py:61–74`).
+- `BuscarUsuarioForm`: filtro de búsqueda y estado (`unity/appi/forms.py:76–90`).
+
+4) Autenticación
+- Login: `unity/appi/views.py:28` usa `AuthenticationForm`, autentica y redirige al dashboard.
+- Logout: `unity/appi/views.py:52` cierra sesión y redirige a login.
+- Configuración: URLs de login/redirecciones en `unity/unity/settings.py:131–134`.
+- Navbar solo autenticado: en `templates/base.html` se renderiza `<nav>` si el usuario está autenticado.
+
+5) Dashboard
+- `unity/appi/views.py:63` calcula métricas: total de usuarios, activos, accesos del día.
+- Últimos accesos listados: `unity/appi/views.py:72`.
+
+6) Usuarios (CRUD)
+- Listar: `unity/appi/views.py:96`
+  - Búsqueda por nombre, apellidos, documento, email (`unity/appi/views.py:105–111`).
+  - Filtro por estado (`unity/appi/views.py:113–115`).
+  - Paginación (`unity/appi/views.py:116–128`).
+- Crear: `unity/appi/views.py:136` crea y muestra mensajes.
+- Detalle: `unity/appi/views.py:156` muestra datos del usuario y últimos accesos.
+- Editar: `unity/appi/views.py:174` actualiza con `UsuarioForm` y redirige a detalle.
+- Eliminar: `unity/appi/views.py:200` confirma y elimina.
+
+7) Registros de Acceso
+- Lista con filtros: `unity/appi/views.py:220`
+  - Filtra por rango de fechas, tipo y usuario (`unity/appi/views.py:224–236`).
+  - Paginación y conteo (`unity/appi/views.py:238–258`).
+- Resumen por usuario: `unity/appi/views.py:265` agrega totales, entradas y salidas.
+- Crear manualmente: `unity/appi/views.py:378` mediante formulario (`RegistroAccesoForm`).
+
+8) Control de Acceso por QR
+- Vista del escáner: `unity/appi/views.py:437` (`control_qr/scanner.html`).
+- API de verificación: `unity/appi/views.py:445`
+  - Entrada JSON: `{ codigo_qr }` (número de documento del usuario).
+  - Valida usuario activo (`Usuario.DoesNotExist` maneja error).
+  - Alterna automáticamente `entrada/salida` según último registro (`unity/appi/views.py:459–466`).
+  - Crea `RegistroAcceso` y responde con datos del usuario (`unity/appi/views.py:469–480`).
+  - Manejo de errores JSON y excepciones (`unity/appi/views.py:502–505, 507`).
+
+9) Informes PDF
+- Generación: `unity/appi/views.py:285` usando ReportLab.
+- Encabezado con logo y título: `unity/appi/views.py:293–306` (logo en `static/imagen/logo.png`).
+- Tabla de resumen semanal:
+  - Cabecera: `unity/appi/views.py:308–316`.
+  - Fila: `unity/appi/views.py:318–329`.
+  - Cálculo de semanas ISO: `unity/appi/views.py:341–350`.
+  - Paginado con `showPage`: `unity/appi/views.py:357–366`.
+
+10) Frontend y estilos
+- Base UI: `templates/base.html` con navbar, mensajes y footer.
+- Login: `templates/registration/login.html` con glass effect, gradientes y toggle de contraseña.
+- Usuarios: `templates/usuarios/*.html` (lista, detalle, crear, editar, eliminar).
+- Accesos: `templates/accesos/*.html` (lista y resumen por usuario).
+- Estilos globales: `static/css/style.css` define paleta, tarjetas, tablas, badges y botones.
+  - Badges de estado: `.badge-success-custom` y `.badge-danger-custom` con texto negro para contraste.
+  - Inputs y selects personalizados: `.form-control-custom` y `select.form-control-custom` (fondo negro para “Estado”).
+
+11) Seguridad y caché
+- Protección de vistas con `@login_required` y `@user_passes_test(es_administrador)`.
+- `@never_cache` aplicado a vistas protegidas para evitar que el navegador sirva contenido de sesión cerrada.
+- Control del botón atrás mediante recarga en `base.html` cuando el usuario no está autenticado.
+
+12) Mensajería y UX
+- Uso de `django.contrib.messages` para feedback (éxito, error) en acciones de CRUD y login.
+- Confirmaciones JS (SweetAlert) para eliminar y guardar (`static/js/confirmations.js`).
+
+13) Configuración clave
+- Idioma español y zona horaria Bogotá: `unity/unity/settings.py:112–115`.
+- Archivos estáticos: `STATIC_URL` y `STATICFILES_DIRS` (`unity/unity/settings.py:124–125`).
+- Base de datos SQLite por defecto: `unity/unity/settings.py:82–87`.
+
+14) Extensiones posibles
+- Agregar gráficos al PDF, limitación por rango de fechas, exportar CSV.
+- Mejoras al dashboard con gráficas por semana y por usuario.
+- Integración de lector QR en el navegador o dispositivo externo.
+
+15) Rutas (referencia lógica)
+- Login: `/appi/login/`
+- Logout: `/appi/logout/`
+- Dashboard: `/appi/`
+- Usuarios: `/appi/usuarios/`, crear/editar/eliminar/detalle con sus rutas nombradas.
+- Accesos: `/appi/accesos/` y `/appi/accesos/usuarios/` para resumen.
+- Control QR: `/appi/control-qr/` y API `/appi/api/verificar-qr/`.
+
+Este documento resume las funcionalidades y ubicaciones clave del código para facilitar su mantenimiento y evolución.

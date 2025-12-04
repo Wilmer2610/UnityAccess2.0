@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registros de Acceso - Sistema de Control de Acceso{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Encabezado de la página -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="header-text">
+                <h1>Registros de Acceso</h1>
+                <p>Historial completo de entradas y salidas del sistema</p>
+            </div>
+        </div>
+        
+        <div class="header-actions" style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            <a href="{% url 'appi:crear_acceso' %}" class="btn-custom btn-success-custom hover-lift">
+                <i class="fas fa-plus"></i>
+                Nuevo Registro
+            </a>
+            <a href="{% url 'appi:accesos_por_usuario' %}" class="btn-custom btn-secondary-custom hover-lift">
+                <i class="fas fa-users"></i>
+                Por Usuario
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros de búsqueda -->
+    <div class="card-custom glass-effect">
+        <div class="card-header-custom">
+            <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+        </div>
+        <div class="card-body-custom">
+            <form method="GET" class="filter-form">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+                    <div class="form-group-custom">
+                        <label>Usuario</label>
+                        <input type="text" name="usuario" value="{{ request.GET.usuario }}" 
+                               placeholder="Buscar por nombre o documento" class="form-control-custom">
+                    </div>
+                    <div class="form-group-custom">
+                        <label>Tipo de Acceso</label>
+                        <select name="tipo_acceso" class="form-control-custom">
+                            <option value="">Todos</option>
+                            <option value="entrada" {% if request.GET.tipo_acceso == 'entrada' %}selected{% endif %}>Entrada</option>
+                            <option value="salida" {% if request.GET.tipo_acceso == 'salida' %}selected{% endif %}>Salida</option>
+                        </select>
+                    </div>
+                    <div class="form-group-custom">
+                        <label>Fecha Desde</label>
+                        <input type="date" name="fecha_desde" value="{{ request.GET.fecha_desde }}" class="form-control-custom">
+                    </div>
+                    <div class="form-group-custom">
+                        <label>Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" value="{{ request.GET.fecha_hasta }}" class="form-control-custom">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn-custom btn-primary-custom">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <a href="{% url 'appi:lista_accesos' %}" class="btn-custom btn-secondary-custom">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de registros -->
+    <div class="card-custom glass-effect">
+        <div class="card-header-custom">
+            <h3><i class="fas fa-list"></i> Registros de Acceso ({{ accesos.count }} registros)</h3>
+        </div>
+        <div class="card-body-custom">
+            {% if accesos %}
+                <div class="table-container">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Documento</th>
+                                <th>Fecha y Hora</th>
+                                <th>Tipo</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acceso in accesos %}
+                            <tr>
+                                <td>
+                                    <span class="badge-custom badge-info-custom">{{ acceso.id }}</span>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <strong>{{ acceso.usuario.nombre_completo }}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ acceso.usuario.numero_documento }}</span>
+                                </td>
+                                <td>
+                                    <div class="datetime-info">
+                                        <div>{{ acceso.fecha_hora|date:"d/m/Y" }}</div>
+                                        <small class="text-muted">{{ acceso.fecha_hora|date:"H:i:s" }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if acceso.tipo_acceso == 'entrada' %}
+                                        <span class="badge-custom badge-success-custom">
+                                            <i class="fas fa-sign-in-alt"></i> Entrada
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-custom badge-warning-custom">
+                                            <i class="fas fa-sign-out-alt"></i> Salida
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if acceso.observaciones %}
+                                        <span class="text-truncate" style="max-width: 200px; display: inline-block;" 
+                                              title="{{ acceso.observaciones }}">
+                                            {{ acceso.observaciones }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        <span>Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ paginator.count }} registros</span>
+                    </div>
+                    <div class="pagination-controls">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.tipo_acceso %}&tipo_acceso={{ request.GET.tipo_acceso }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}" 
+                               class="btn-custom btn-secondary-custom">Primera</a>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.tipo_acceso %}&tipo_acceso={{ request.GET.tipo_acceso }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}" 
+                               class="btn-custom btn-secondary-custom">Anterior</a>
+                        {% endif %}
+                        
+                        <span class="current-page">Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.tipo_acceso %}&tipo_acceso={{ request.GET.tipo_acceso }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}" 
+                               class="btn-custom btn-secondary-custom">Siguiente</a>
+                            <a href="?page={{ paginator.num_pages }}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.tipo_acceso %}&tipo_acceso={{ request.GET.tipo_acceso }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}" 
+                               class="btn-custom btn-secondary-custom">Última</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3>No hay registros de acceso</h3>
+                    <p>No se encontraron registros que coincidan con los criterios de búsqueda.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        {% if request.GET.usuario or request.GET.tipo_acceso or request.GET.fecha_desde or request.GET.fecha_hasta %}
+                            <a href="{% url 'appi:lista_accesos' %}" class="btn-custom btn-secondary-custom">
+                                <i class="fas fa-times"></i>
+                                Limpiar Filtros
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'appi:crear_acceso' %}" class="btn-custom btn-success-custom">
+                            <i class="fas fa-plus"></i>
+                            Crear Primer Registro
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+                                    <td>
+                                        {% if acceso.exitoso %}
+                                            <span class="badge bg-success">{{ acceso.tipo_acceso|title }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Fallido</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-door-closed fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No hay registros de acceso</h6>
+                        <p class="text-muted">Los registros de acceso aparecerán aquí cuando se generen actividades en el sistema.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0 text-white"><i class="fas fa-bolt me-2"></i>Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'appi:dashboard' %}" class="btn btn-primary w-100 py-3">
+                            <i class="fas fa-tachometer-alt fa-2x d-block mb-2"></i>
+                            Dashboard
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'appi:lista_usuarios' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-users fa-2x d-block mb-2"></i>
+                            Ver Usuarios
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'appi:crear_usuario' %}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-user-plus fa-2x d-block mb-2"></i>
+                            Crear Usuario
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-info w-100 py-3" onclick="window.location.reload()">
+                            <i class="fas fa-sync-alt fa-2x d-block mb-2"></i>
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

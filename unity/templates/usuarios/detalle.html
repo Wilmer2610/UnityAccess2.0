@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Usuario - Sistema de Control de Acceso{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+    <!-- Header de la página -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h1 class="card-title-custom text-gradient">Detalle del Usuario</h1>
+        </div>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
+            Información completa del usuario <strong style="color: var(--accent-color);">{{ usuario.nombre_completo }}</strong>.
+        </p>
+    </div>
+
+    <!-- Información del usuario -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h2 class="card-title-custom">Información Personal</h2>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <!-- Información de identificación -->
+            <div style="margin-bottom: 2.5rem;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-id-card"></i>
+                    Identificación
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Número de Documento</label>
+                        <div class="info-value-custom">{{ usuario.numero_documento }}</div>
+                    </div>
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Tipo de Documento</label>
+                        <div class="info-value-custom">{{ usuario.get_tipo_documento_display }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información personal -->
+            <div style="margin-bottom: 2.5rem;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-user"></i>
+                    Datos Personales
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Nombres</label>
+                        <div class="info-value-custom">{{ usuario.nombres }}</div>
+                    </div>
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Apellidos</label>
+                        <div class="info-value-custom">{{ usuario.apellidos }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de contacto -->
+            <div style="margin-bottom: 2.5rem;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-address-book"></i>
+                    Información de Contacto
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Correo Electrónico</label>
+                        <div class="info-value-custom">
+                            <a href="mailto:{{ usuario.email }}" style="color: var(--accent-color); text-decoration: none;">
+                                {{ usuario.email }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Teléfono</label>
+                        <div class="info-value-custom">
+                            {% if usuario.telefono %}
+                                <a href="tel:{{ usuario.telefono }}" style="color: var(--accent-color); text-decoration: none;">
+                                    {{ usuario.telefono }}
+                                </a>
+                            {% else %}
+                                <span style="color: rgba(255, 255, 255, 0.5);">No especificado</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado y fechas -->
+            <div style="margin-bottom: 2.5rem;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-clock"></i>
+                    Estado y Fechas
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Estado</label>
+                        <div class="info-value-custom">
+                            {% if usuario.estado == 'activo' %}
+                                <span class="badge-custom badge-success-custom">
+                                    <i class="fas fa-check-circle"></i>
+                                    Activo
+                                </span>
+                            {% else %}
+                                <span class="badge-custom badge-danger-custom">
+                                    <i class="fas fa-times-circle"></i>
+                                    Inactivo
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item-custom">
+                        <label class="info-label-custom">Fecha de Registro</label>
+                        <div class="info-value-custom">{{ usuario.fecha_registro|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <a href="{% url 'appi:lista_usuarios' %}" class="btn-custom btn-secondary-custom hover-lift">
+                <i class="fas fa-arrow-left"></i>
+                Volver a la Lista
+            </a>
+            <a href="{% url 'appi:editar_usuario' usuario.id %}" class="btn-custom btn-warning-custom hover-lift">
+                <i class="fas fa-edit"></i>
+                Editar Usuario
+            </a>
+            <a href="{% url 'appi:informe_usuario_pdf' usuario.numero_documento %}" class="btn-custom btn-primary-custom hover-lift">
+                <i class="fas fa-file-pdf"></i>
+                Descargar Informe PDF
+            </a>
+            <a href="{% url 'appi:enviar_qr_usuario' usuario.id %}" class="btn-custom btn-primary-custom hover-lift">
+                <i class="fas fa-paper-plane"></i>
+                Enviar QR por Correo
+            </a>
+            <div class="action-buttons">
+                <a href="{% url 'appi:eliminar_usuario' usuario.id %}" class="btn-custom btn-danger-custom hover-lift js-delete-link" data-confirm-title="Eliminar Usuario" data-confirm-text="¿Seguro que deseas eliminar este usuario?" data-confirm-icon="warning">
+                    <i class="fas fa-trash"></i>
+                    Eliminar Usuario
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
