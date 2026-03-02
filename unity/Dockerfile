@@ -31,5 +31,6 @@ RUN python manage.py collectstatic --noinput
 # Exponer el puerto en el que corre la aplicación
 EXPOSE 8000
 
-# Comando para ejecutar la aplicación usando Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "unity.wsgi:application"]
+# Comando de arranque
+RUN chmod +x /app/start.sh
+CMD ["./start.sh"]
