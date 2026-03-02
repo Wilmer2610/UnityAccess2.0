@@ -301,6 +301,19 @@ body::before {
     color: var(--white);
 }
 
+.btn-purple-custom {
+    background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+    color: var(--white);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-purple-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+    color: var(--white);
+}
+
 /* Tabla personalizada */
 .table-custom {
     background: rgba(255, 255, 255, 0.02);

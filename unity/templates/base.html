@@ -34,12 +34,13 @@
                 <div style="display: flex;  align-items: center; gap: 1rem;">
                     <a  style="text-decoration: none;" class="nav-link-custom" href="{% url 'appi:dashboard' %}">
                         <i class="fas fa-tachometer-alt"></i>
-                        Inicio                    </a>
+                        Dashboard
+                    </a>
                     <a style="text-decoration: none;"  class="nav-link-custom" href="{% url 'appi:lista_usuarios' %}">
                         <i class="fas fa-users"></i>
                         Usuarios
                     </a>
-                    <a style="text-decoration: none;"  class="nav-link-custom" href="{% url 'appi:control_qr' %}">
+                    <a style="text-decoration: none;"  class="nav-link-custom" href="{% url 'appi:control_qr' %}" onclick="window.open(this.href, 'QRScannerWindow', 'width=1000,height=800,scrollbars=yes,resizable=yes'); return false;">
                         <i class="fas fa-qrcode"></i>
                         Control QR
                     </a>

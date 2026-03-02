@@ -31,6 +31,14 @@ import base64
 def es_administrador(user):
     return user.is_authenticated and (user.is_superuser or user.is_staff)
 
+# Verificar si el usuario es vigilante
+def es_vigilante(user):
+    return user.is_authenticated and user.groups.filter(name='Vigilantes').exists()
+
+# Verificar si es personal autorizado (Admin o Vigilante)
+def es_autorizado(user):
+    return es_administrador(user) or es_vigilante(user)
+
 def enviar_qr_por_email(request=None, usuario=None):
     try:
         from io import BytesIO
@@ -209,7 +217,7 @@ def logout_view(request):
 @never_cache
 @never_cache
 @login_required
-@user_passes_test(es_administrador)
+@user_passes_test(es_autorizado)
 def dashboard_view(request):
     # Estadísticas básicas
     total_usuarios = Usuario.objects.count()
@@ -229,11 +237,46 @@ def dashboard_view(request):
     }
     return render(request, 'appi/dashboard.html', context)
 
+@never_cache
+@login_required
+@user_passes_test(es_administrador)
+def estadisticas_view(request):
+    return render(request, 'appi/estadisticas.html')
+
 # Vista principal (home)
 def home_view(request):
     if request.user.is_authenticated:
         return redirect('appi:dashboard')
     return render(request, 'home.html')
+
+@never_cache
+@never_cache
+@never_cache
+@login_required
+@user_passes_test(es_autorizado)
+def registrar_invitado(request):
+    if request.method == 'POST':
+        form = UsuarioForm(request.POST)
+        if form.is_valid():
+            usuario = form.save(commit=False)
+            # Aseguramos que el estado sea activo
+            usuario.estado = 'activo'
+            usuario.save()
+            
+            # Intentar enviar QR, pero no bloquear si falla
+            try:
+                enviar_qr_por_email(request, usuario)
+            except:
+                pass
+                
+            messages.success(request, f'Invitado {usuario.nombre_completo} registrado exitosamente.')
+            return redirect('appi:dashboard')
+        else:
+            messages.error(request, 'Por favor corrige los errores en el formulario.')
+    else:
+        form = UsuarioForm()
+    
+    return render(request, 'usuarios/registrar_invitado.html', {'form': form})
 
 # CRUD DE USUARIOS
 
@@ -641,7 +684,12 @@ def api_estadisticas_dashboard(request):
     accesos_por_dia = []
     for i in range(7):
         fecha = hace_7_dias + timedelta(days=i)
-        count = RegistroAcceso.objects.filter(fecha_hora__date=fecha).count()
+        # Contar usuarios únicos que han ingresado ese día
+        count = RegistroAcceso.objects.filter(
+            fecha_hora__date=fecha, 
+            tipo_acceso='entrada'
+        ).values('usuario').distinct().count()
+        
         accesos_por_dia.append({
             'fecha': fecha.strftime('%d/%m'),
             'count': count
@@ -655,6 +703,15 @@ def api_estadisticas_dashboard(request):
     data = {
         'accesos_por_dia': accesos_por_dia,
         'tipos_acceso': list(tipos_acceso),
+        'ultimos_accesos': [
+            {
+                'usuario': f"{a.usuario.nombres} {a.usuario.apellidos}",
+                'tipo_acceso': a.get_tipo_acceso_display(),
+                'hora': a.fecha_hora.strftime('%H:%M:%S'),
+                'fecha': a.fecha_hora.strftime('%d/%m/%Y'),
+                'email': a.usuario.email
+            } for a in RegistroAcceso.objects.select_related('usuario').order_by('-fecha_hora')[:10]
+        ]
     }
     
     return JsonResponse(data)

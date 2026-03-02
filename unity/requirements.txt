@@ -1,0 +1,9 @@
+whitenoise==6.11.0
+django
+gunicorn
+psycopg2-binary
+dj-database-url
+python-dotenv
+reportlab
+qrcode
+Pillow

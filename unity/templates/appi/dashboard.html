@@ -10,14 +10,15 @@
             <div class="card-icon-custom">
                 <i class="fas fa-tachometer-alt"></i>
             </div>
-            <h1 class="card-title-custom text-gradient">Panel de Control</h1>
+            <h1 class="card-title-custom text-gradient">Dashboard</h1>
         </div>
         <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
             Bienvenido al sistema de control de acceso Unity Access. Gestiona usuarios y monitorea la actividad del sistema.
         </p>
     </div>
 
-    <!-- Estadísticas -->
+    <!-- Estadísticas (SOLO ADMIN) -->
+    {% if user.is_staff or user.is_superuser %}
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
         <div class="stats-card-custom hover-lift">
             <div class="stats-icon-custom">
@@ -35,14 +36,15 @@
             <div class="stats-label">Total Usuarios</div>
         </div>
         
-        <div class="stats-card-custom hover-lift">
+        <a href="{% url 'appi:estadisticas' %}" class="stats-card-custom hover-lift" style="text-decoration: none; display: block;">
             <div class="stats-icon-custom">
                 <i class="fas fa-clock"></i>
             </div>
-            <div class="stats-number">{{ accesos_hoy }}</div>
-            <div class="stats-label">Accesos Hoy</div>
-        </div>
+            <div class="stats-number">{{ total_accesos_hoy }}</div>
+            <div class="stats-label">Accesos Hoy (Ver Gráfico)</div>
+        </a>
     </div>
+    {% endif %}
 
     <!-- Acciones Rápidas -->
     <div class="content-card">
@@ -53,30 +55,52 @@
             <h2 class="card-title-custom">Acciones Rápidas</h2>
         </div>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-            <a href="{% url 'appi:lista_usuarios' %}" class="btn-custom btn-primary-custom hover-lift">
-                <i class="fas fa-users"></i>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'appi:lista_usuarios' %}" class="btn-custom btn-primary-custom hover-lift" style="height: auto; flex-direction: column; padding: 1.5rem; gap: 0.5rem; width: 100%;">
+                <i class="fas fa-users" style="font-size: 2rem;"></i>
                 Ver Usuarios
             </a>
-            <a href="{% url 'appi:crear_usuario' %}" class="btn-custom btn-success-custom hover-lift">
-                <i class="fas fa-user-plus"></i>
+            <a href="{% url 'appi:crear_usuario' %}" class="btn-custom btn-success-custom hover-lift" style="height: auto; flex-direction: column; padding: 1.5rem; gap: 0.5rem; width: 100%;">
+                <i class="fas fa-user-plus" style="font-size: 2rem;"></i>
                 Crear Usuario
             </a>
-            <a href="/admin/" class="btn-custom btn-secondary-custom hover-lift">
-                <i class="fas fa-cog"></i>
-                Administración
+            <a href="{% url 'appi:estadisticas' %}" class="btn-custom btn-secondary-custom hover-lift" style="height: auto; flex-direction: column; padding: 1.5rem; gap: 0.5rem; width: 100%;">
+                <i class="fas fa-chart-bar" style="font-size: 2rem;"></i>
+                Accesos por Día
+            </a>
+            {% endif %}
+
+            <a href="{% url 'appi:control_qr' %}" 
+               class="btn-custom btn-purple-custom hover-lift" 
+               style="height: auto; flex-direction: column; padding: 1.5rem; gap: 0.5rem; width: 100%;"
+               onclick="window.open(this.href, 'QRScannerWindow', 'width=1000,height=800,scrollbars=yes,resizable=yes'); return false;">
+                <i class="fas fa-qrcode" style="font-size: 2rem;"></i>
+                Control QR (Ventana Independiente)
+            </a>
+            <a href="{% url 'appi:registrar_invitado' %}" class="btn-custom btn-success-custom hover-lift" style="height: auto; flex-direction: column; padding: 1.5rem; gap: 0.5rem; width: 100%;">
+                <i class="fas fa-user-clock" style="font-size: 2rem;"></i>
+                Registrar Invitado
             </a>
         </div>
     </div>
 
-    <!-- Usuarios Recientes -->
-    {% if usuarios_recientes %}
+    <!-- Monitoreo en Vivo (SOLO ADMIN) -->
+    {% if user.is_staff or user.is_superuser %}
     <div class="content-card">
-        <div class="card-header-custom">
-            <div class="card-icon-custom">
-                <i class="fas fa-history"></i>
+        <div class="card-header-custom" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="card-icon-custom">
+                    <i class="fas fa-satellite-dish"></i>
+                </div>
+                <h2 class="card-title-custom">Monitoreo en Vivo</h2>
             </div>
-            <h2 class="card-title-custom">Usuarios Recientes</h2>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="badge-custom badge-success-custom pulse-animation">
+                    <i class="fas fa-circle" style="font-size: 0.6rem; margin-right: 0.5rem;"></i>
+                    En línea
+                </span>
+            </div>
         </div>
         
         <div class="table-custom">
@@ -85,43 +109,42 @@
                     <tr>
                         <th>Usuario</th>
                         <th>Email</th>
-                        <th>Estado</th>
-                        <th>Fecha Registro</th>
-                        <th>Acciones</th>
+                        <th>Tipo</th>
+                        <th>Hora</th>
+                        <th>Fecha</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for usuario in usuarios_recientes %}
+                <tbody id="live-monitoring-body">
+                    {% for acceso in ultimos_accesos %}
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="width: 40px; height: 40px; background: var(--gradient-tech); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
-                                    {{ usuario.nombres|first }}{{ usuario.apellidos|first }}
+                                <div style="width: 32px; height: 32px; background: var(--gradient-tech); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem;">
+                                    {{ acceso.usuario.nombres|first }}{{ acceso.usuario.apellidos|first }}
                                 </div>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--white);">{{ usuario.nombre_completo }}</div>
-                                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">{{ usuario.telefono|default:"Sin teléfono" }}</div>
-                                </div>
+                                <span style="font-weight: 500;">{{ acceso.usuario.nombre_completo }}</span>
                             </div>
                         </td>
-                        <td>{{ usuario.email }}</td>
+                        <td style="color: #9ca3af;">{{ acceso.usuario.email }}</td>
                         <td>
-                            {% if usuario.estado == 'activo' %}
-                                <span class="badge-custom badge-success-custom">Activo</span>
+                            {% if acceso.tipo_acceso == 'entrada' %}
+                            <span class="badge-custom badge-success-custom">
+                                <i class="fas fa-arrow-right" style="transform: rotate(45deg);"></i> Entrada
+                            </span>
                             {% else %}
-                                <span class="badge-custom badge-danger-custom">Inactivo</span>
+                            <span class="badge-custom badge-danger-custom">
+                                <i class="fas fa-arrow-left" style="transform: rotate(45deg);"></i> Salida
+                            </span>
                             {% endif %}
                         </td>
-                        <td>{{ usuario.fecha_registro|date:"d/m/Y" }}</td>
-                        <td>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <a href="{% url 'appi:detalle_usuario' usuario.id %}" class="btn-custom btn-secondary-custom" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{% url 'appi:editar_usuario' usuario.id %}" class="btn-custom btn-warning-custom" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </div>
+                        <td style="font-family: monospace; font-size: 0.95rem;">{{ acceso.fecha_hora|date:"H:i:s" }}</td>
+                        <td style="color: #9ca3af; font-size: 0.9rem;">{{ acceso.fecha_hora|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: #9ca3af;">
+                            <i class="fas fa-clock" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>No hay registros de acceso recientes</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -130,5 +153,47 @@
         </div>
     </div>
     {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        {% if user.is_staff or user.is_superuser %}
+        function updateDashboard() {
+            fetch("{% url 'appi:estadisticas_api' %}")
+                .then(response => response.json())
+                .then(data => {
+                    // Actualizar Tabla de Monitoreo
+                    const tbody = document.getElementById('live-monitoring-body');
+                    if (data.ultimos_accesos && data.ultimos_accesos.length > 0) {
+                        tbody.innerHTML = data.ultimos_accesos.map(acceso => `
+                            <tr class="fade-in-up">
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <div style="width: 32px; height: 32px; background: var(--gradient-tech); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem;">
+                                            ${acceso.usuario.charAt(0)}
+                                        </div>
+                                        <span style="font-weight: 500;">${acceso.usuario}</span>
+                                    </div>
+                                </td>
+                                <td style="color: #9ca3af;">${acceso.email}</td>
+                                <td>
+                                    <span class="badge-custom ${acceso.tipo_acceso === 'Entrada' ? 'badge-success-custom' : 'badge-danger-custom'}">
+                                        <i class="fas fa-arrow-${acceso.tipo_acceso === 'Entrada' ? 'right' : 'left'}" style="transform: rotate(45deg);"></i> 
+                                        ${acceso.tipo_acceso}
+                                    </span>
+                                </td>
+                                <td style="font-family: monospace; font-size: 0.95rem;">${acceso.hora}</td>
+                                <td style="color: #9ca3af; font-size: 0.9rem;">${acceso.fecha}</td>
+                            </tr>
+                        `).join('');
+                    }
+                })
+                .catch(error => console.error('Error actualizando dashboard:', error));
+        }
+
+        // Cargar inmediatamente y luego cada 5 segundos
+        updateDashboard();
+        setInterval(updateDashboard, 5000);
+        {% endif %}
+    </script>
 </div>
 {% endblock %}

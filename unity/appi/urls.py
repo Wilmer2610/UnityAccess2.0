@@ -14,6 +14,7 @@ urlpatterns = [
     
     # CRUD Usuarios
     path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
+    path('usuarios/registrar-invitado/', views.registrar_invitado, name='registrar_invitado'),
     path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
     path('usuarios/<int:id>/', views.detalle_usuario, name='detalle_usuario'),
     path('usuarios/<int:id>/editar/', views.editar_usuario, name='editar_usuario'),
@@ -34,6 +35,7 @@ urlpatterns = [
     
     # API para estadísticas
     path('api/estadisticas/', views.api_estadisticas_dashboard, name='estadisticas_api'),
+    path('estadisticas/', views.estadisticas_view, name='estadisticas'),
 
     # Cambiar contraseña (usuario logueado)
     path(

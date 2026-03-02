@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Estadísticas de Accesos - Unity Access{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+    <div class="content-card" style="margin-bottom: 2rem;">
+        <div class="card-header-custom">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="{% url 'appi:dashboard' %}" class="btn-custom btn-secondary-custom" style="padding: 0.5rem 1rem;">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <div class="card-icon-custom">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h2 class="card-title-custom">Accesos por Día (Usuarios Ingresados)</h2>
+            </div>
+        </div>
+        <div style="height: 400px; width: 100%;">
+            <canvas id="accesosChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch("{% url 'appi:estadisticas_api' %}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.accesos_por_dia) {
+                        initChart(data.accesos_por_dia);
+                    }
+                })
+                .catch(error => console.error('Error cargando estadísticas:', error));
+        });
+
+        function initChart(data) {
+            const ctx = document.getElementById('accesosChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.fecha),
+                    datasets: [{
+                        label: 'Usuarios Únicos Ingresados',
+                        data: data.map(d => d.count),
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#3b82f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.7)', font: { family: 'Inter' } }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#cbd5e1',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.5)', stepSize: 1, font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'rgba(255, 255, 255, 0.5)', font: { family: 'Inter' } }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+    </script>
+</div>
+{% endblock %}

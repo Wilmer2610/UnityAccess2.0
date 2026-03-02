@@ -48,6 +48,20 @@ Configuración relevante en `unity/unity/settings.py`:
 3. Ejecutar servidor: `python unity/manage.py runserver`
 4. Acceder a `http://127.0.0.1:8000/`
 
+## Cómo ejecutar con Docker
+
+1. Navegar a la carpeta `unity`:
+   ```bash
+   cd unity
+   ```
+2. Construir y levantar los contenedores:
+   ```bash
+   docker compose up --build
+   ```
+   Nota: Si usas una versión antigua de Docker, usa `docker-compose` en lugar de `docker compose`.
+
+3. La aplicación estará disponible en `http://localhost:8000`.
+
 ## Notas
 
 - El módulo de configuración activo es `unity.unity.settings` (por `DJANGO_SETTINGS_MODULE = 'unity.settings'`).

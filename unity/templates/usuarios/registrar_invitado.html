@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Invitado - UnityAccess{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+    <!-- Header de la sección -->
+    <div class="content-card mb-4">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h1 class="card-title-custom text-gradient">Registrar Nuevo Invitado</h1>
+        </div>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
+            Complete el formulario con los datos del visitante para generar su acceso.
+        </p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="content-card">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger mb-4">
+                            {% for error in form.non_field_errors %}
+                                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="row g-4">
+                        <!-- Sección Documento -->
+                        <div class="col-12">
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3">
+                                <i class="fas fa-id-card me-2 text-primary"></i>Identificación
+                            </h5>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.tipo_documento.id_for_label }}" class="form-label text-white-50">Tipo Documento</label>
+                            {{ form.tipo_documento }}
+                            {% if form.tipo_documento.errors %}
+                                <div class="text-danger small mt-1">{{ form.tipo_documento.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.numero_documento.id_for_label }}" class="form-label text-white-50">Número Documento</label>
+                            {{ form.numero_documento }}
+                            {% if form.numero_documento.errors %}
+                                <div class="text-danger small mt-1">{{ form.numero_documento.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Sección Datos Personales -->
+                        <div class="col-12 mt-4">
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3">
+                                <i class="fas fa-user me-2 text-primary"></i>Datos Personales
+                            </h5>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.nombres.id_for_label }}" class="form-label text-white-50">Nombres</label>
+                            {{ form.nombres }}
+                            {% if form.nombres.errors %}
+                                <div class="text-danger small mt-1">{{ form.nombres.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.apellidos.id_for_label }}" class="form-label text-white-50">Apellidos</label>
+                            {{ form.apellidos }}
+                            {% if form.apellidos.errors %}
+                                <div class="text-danger small mt-1">{{ form.apellidos.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Sección Contacto -->
+                        <div class="col-12 mt-4">
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3">
+                                <i class="fas fa-envelope me-2 text-primary"></i>Contacto
+                            </h5>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.email.id_for_label }}" class="form-label text-white-50">Correo Electrónico</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.telefono.id_for_label }}" class="form-label text-white-50">Teléfono / Celular</label>
+                            {{ form.telefono }}
+                            {% if form.telefono.errors %}
+                                <div class="text-danger small mt-1">{{ form.telefono.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-12 d-none">
+                            {{ form.estado }}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-3 d-md-flex justify-content-md-end mt-5 pt-3 border-top border-secondary">
+                        <a href="{% url 'appi:dashboard' %}" class="btn-custom btn-secondary-custom">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn-custom btn-success-custom px-5">
+                            <i class="fas fa-save me-2"></i>Registrar Invitado
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
