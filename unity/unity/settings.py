@@ -23,7 +23,11 @@ load_dotenv( BASE_DIR / '.env' )
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9e(zs90h&#m5gqxh3(j(cc#!4lvirfu-u-*h_3r+77r6%r%3=#'
+# En producción se lee desde la variable de entorno SECRET_KEY
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'dev-insecure-key-change-me'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == '1'
@@ -88,9 +92,12 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'postgresql://postgres:Jj19250102@127.0.0.1:5432/DBUnityAccess'),
+        # En producción usar DATABASE_URL (por ejemplo, Supabase). Forzamos SSL.
+        # En desarrollo sin DATABASE_URL, caer a SQLite.
+        default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
         conn_health_checks=True,
+        ssl_require=True,
     )
 }
 
