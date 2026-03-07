@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="fade-in-up">
-    <!-- Header de la sección -->
-    <div class="content-card mb-4">
+    <!-- Header de la página -->
+    <div class="content-card">
         <div class="card-header-custom">
             <div class="card-icon-custom">
                 <i class="fas fa-user-plus"></i>
@@ -13,108 +13,147 @@
             <h1 class="card-title-custom text-gradient">Registrar Nuevo Invitado</h1>
         </div>
         <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
-            Complete el formulario con los datos del visitante para generar su acceso.
+            Registra un invitado en el sistema Unity Access.
         </p>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="content-card">
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger mb-4">
-                            {% for error in form.non_field_errors %}
-                                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <div class="row g-4">
-                        <!-- Sección Documento -->
-                        <div class="col-12">
-                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3">
-                                <i class="fas fa-id-card me-2 text-primary"></i>Identificación
-                            </h5>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="{{ form.tipo_documento.id_for_label }}" class="form-label text-white-50">Tipo Documento</label>
-                            {{ form.tipo_documento }}
-                            {% if form.tipo_documento.errors %}
-                                <div class="text-danger small mt-1">{{ form.tipo_documento.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ form.numero_documento.id_for_label }}" class="form-label text-white-50">Número Documento</label>
-                            {{ form.numero_documento }}
-                            {% if form.numero_documento.errors %}
-                                <div class="text-danger small mt-1">{{ form.numero_documento.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Sección Datos Personales -->
-                        <div class="col-12 mt-4">
-                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3">
-                                <i class="fas fa-user me-2 text-primary"></i>Datos Personales
-                            </h5>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="{{ form.nombres.id_for_label }}" class="form-label text-white-50">Nombres</label>
-                            {{ form.nombres }}
-                            {% if form.nombres.errors %}
-                                <div class="text-danger small mt-1">{{ form.nombres.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ form.apellidos.id_for_label }}" class="form-label text-white-50">Apellidos</label>
-                            {{ form.apellidos }}
-                            {% if form.apellidos.errors %}
-                                <div class="text-danger small mt-1">{{ form.apellidos.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Sección Contacto -->
-                        <div class="col-12 mt-4">
-                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3">
-                                <i class="fas fa-envelope me-2 text-primary"></i>Contacto
-                            </h5>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="{{ form.email.id_for_label }}" class="form-label text-white-50">Correo Electrónico</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="{{ form.telefono.id_for_label }}" class="form-label text-white-50">Teléfono / Celular</label>
-                            {{ form.telefono }}
-                            {% if form.telefono.errors %}
-                                <div class="text-danger small mt-1">{{ form.telefono.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-12 d-none">
-                            {{ form.estado }}
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-3 d-md-flex justify-content-md-end mt-5 pt-3 border-top border-secondary">
-                        <a href="{% url 'appi:dashboard' %}" class="btn-custom btn-secondary-custom">
-                            <i class="fas fa-times me-2"></i>Cancelar
-                        </a>
-                        <button type="submit" class="btn-custom btn-success-custom px-5">
-                            <i class="fas fa-save me-2"></i>Registrar Invitado
-                        </button>
-                    </div>
-                </form>
+    <!-- Formulario de registro (estilo unificado con crear.html) -->
+    <div class="content-card">
+        <div class="card-header-custom">
+            <div class="card-icon-custom">
+                <i class="fas fa-form"></i>
             </div>
+            <h2 class="card-title-custom">Información del Invitado</h2>
         </div>
+
+        <form method="post" style="margin-top: 2rem;" class="form-custom js-confirm" data-confirm-title="Registrar Invitado" data-confirm-text="¿Deseas registrar este invitado?" data-confirm-icon="question">
+            {% csrf_token %}
+
+            <!-- Identificación -->
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-id-card"></i>
+                    Identificación
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div>
+                        <label class="form-label-custom" for="{{ form.numero_documento.id_for_label }}">
+                            {{ form.numero_documento.label }}
+                        </label>
+                        {{ form.numero_documento }}
+                        {% if form.numero_documento.errors %}
+                            <div class="alert-custom alert-danger-custom" style="margin-top: 0.5rem; padding: 0.5rem;">
+                                {{ form.numero_documento.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label-custom" for="{{ form.tipo_documento.id_for_label }}">
+                            {{ form.tipo_documento.label }}
+                        </label>
+                        {{ form.tipo_documento }}
+                        {% if form.tipo_documento.errors %}
+                            <div class="alert-custom alert-danger-custom" style="margin-top: 0.5rem; padding: 0.5rem;">
+                                {{ form.tipo_documento.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información personal -->
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-user"></i>
+                    Información Personal
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div>
+                        <label class="form-label-custom" for="{{ form.nombres.id_for_label }}">
+                            {{ form.nombres.label }}
+                        </label>
+                        {{ form.nombres }}
+                        {% if form.nombres.errors %}
+                            <div class="alert-custom alert-danger-custom" style="margin-top: 0.5rem; padding: 0.5rem;">
+                                {{ form.nombres.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label-custom" for="{{ form.apellidos.id_for_label }}">
+                            {{ form.apellidos.label }}
+                        </label>
+                        {{ form.apellidos }}
+                        {% if form.apellidos.errors %}
+                            <div class="alert-custom alert-danger-custom" style="margin-top: 0.5rem; padding: 0.5rem;">
+                                {{ form.apellidos.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de contacto -->
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-address-book"></i>
+                    Información de Contacto
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div>
+                        <label class="form-label-custom" for="{{ form.email.id_for_label }}">
+                            {{ form.email.label }}
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="alert-custom alert-danger-custom" style="margin-top: 0.5rem; padding: 0.5rem;">
+                                {{ form.email.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label-custom" for="{{ form.telefono.id_for_label }}">
+                            {{ form.telefono.label }}
+                        </label>
+                        {{ form.telefono }}
+                        {% if form.telefono.errors %}
+                            <div class="alert-custom alert-danger-custom" style="margin-top: 0.5rem; padding: 0.5rem;">
+                                {{ form.telefono.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado (oculto; se fuerza a activo en la vista) -->
+            <div style="display:none">
+                {{ form.estado }}
+            </div>
+
+            <!-- Botones de acción -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <a href="{% url 'appi:dashboard' %}" class="btn-custom btn-secondary-custom hover-lift">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-custom btn-success-custom hover-lift">
+                    <i class="fas fa-save"></i>
+                    Registrar Invitado
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+// Igualamos estilos de campos al formulario de creación
+document.addEventListener('DOMContentLoaded', function() {
+    const formControls = document.querySelectorAll('input, select, textarea');
+    formControls.forEach(function(control) {
+        if (!control.classList.contains('btn-custom')) {
+            control.classList.add('form-control-custom');
+        }
+    });
+});
+</script>
 {% endblock %}
