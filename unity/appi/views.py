@@ -585,57 +585,60 @@ def informe_usuario_pdf(request, numero_documento):
         pdf.roundRect(25, y - 22, width - 50, 24, 6, fill=1, stroke=0)
         pdf.setFillColor(colors.white)
         pdf.setFont('Helvetica-Bold', 11)
-        pdf.drawString(35, y - 16, 'Semana')
-        pdf.drawString(160, y - 16, 'Entradas')
-        pdf.drawString(250, y - 16, 'Salidas')
-        pdf.drawString(340, y - 16, 'Total')
+        pdf.drawString(35, y - 16, 'Fecha')
+        pdf.drawString(120, y - 16, 'Hora')
+        pdf.drawString(200, y - 16, 'Tipo de Acceso')
+        pdf.drawString(320, y - 16, 'Observaciones')
 
-    def table_row(y, semana_label, entradas, salidas):
+    def table_row(y, fecha, hora, tipo_acceso, observaciones):
         pdf.setFillColor(colors.HexColor('#111827'))
         pdf.roundRect(25, y - 20, width - 50, 22, 6, fill=1, stroke=0)
         pdf.setFillColor(colors.HexColor('#e5e7eb'))
         pdf.setFont('Helvetica', 10)
-        pdf.drawString(35, y - 14, semana_label)
-        pdf.setFillColor(colors.HexColor('#34d399'))
-        pdf.drawString(160, y - 14, str(entradas))
-        pdf.setFillColor(colors.HexColor('#fbbf24'))
-        pdf.drawString(250, y - 14, str(salidas))
-        pdf.setFillColor(colors.HexColor('#93c5fd'))
-        pdf.drawString(340, y - 14, str(entradas + salidas))
+        pdf.drawString(35, y - 14, fecha)
+        pdf.drawString(120, y - 14, hora)
+        
+        # Color según tipo de acceso
+        if tipo_acceso == 'entrada':
+            pdf.setFillColor(colors.HexColor('#34d399'))  # Verde para entrada
+        else:
+            pdf.setFillColor(colors.HexColor('#fbbf24'))  # Amarillo para salida
+        
+        pdf.drawString(200, y - 14, tipo_acceso.title())
+        pdf.setFillColor(colors.HexColor('#e5e7eb'))
+        
+        # Truncar observaciones si son muy largas
+        obs_truncado = observaciones[:25] + '...' if len(observaciones) > 25 else observaciones
+        pdf.drawString(320, y - 14, obs_truncado)
 
     header()
 
     y = height - 110
     pdf.setFillColor(colors.HexColor('#374151'))
     pdf.setFont('Helvetica-Bold', 12)
-    pdf.drawString(25, y, 'Resumen semanal de entradas y salidas')
+    pdf.drawString(25, y, 'Registro individual de entradas y salidas')
     y -= 10
     table_header(y)
     y -= 30
 
-    semanas = {}
-    for a in accesos:
-        iso = a.fecha_hora.isocalendar()
-        key = (iso.year, iso.week)
-        if key not in semanas:
-            semanas[key] = {'entradas': 0, 'salidas': 0}
-        if a.tipo_acceso == 'entrada':
-            semanas[key]['entradas'] += 1
-        else:
-            semanas[key]['salidas'] += 1
-
-    ordenadas = sorted(semanas.items(), key=lambda x: (x[0][0], x[0][1]))
-    for (year, week), data in ordenadas:
-        label = f'Semana {week} - {year}'
-        table_row(y, label, data['entradas'], data['salidas'])
+    # Mostrar cada acceso individual
+    for acceso in accesos:
+        fecha = acceso.fecha_hora.strftime('%d/%m/%Y')
+        hora = acceso.fecha_hora.strftime('%H:%M')
+        tipo_acceso = acceso.tipo_acceso
+        observaciones = acceso.observaciones or '-'
+        
+        table_row(y, fecha, hora, tipo_acceso, observaciones)
         y -= 26
+        
+        # Nueva página si no hay espacio suficiente
         if y < 80:
             pdf.showPage()
             header()
             y = height - 110
             pdf.setFillColor(colors.HexColor('#374151'))
             pdf.setFont('Helvetica-Bold', 12)
-            pdf.drawString(25, y, 'Resumen semanal de entradas y salidas')
+            pdf.drawString(25, y, 'Registro individual de entradas y salidas')
             y -= 10
             table_header(y)
             y -= 30
