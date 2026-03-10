@@ -22,6 +22,18 @@
                 <i class="fas fa-plus"></i>
                 Nuevo Registro
             </a>
+# Ejemplo de cómo el informe ahora filtra por fecha
+if fecha_desde:
+    accesos = accesos.filter(fecha_hora__date__gte=fecha_desde)
+if fecha_hasta:
+    accesos = accesos.filter(fecha_hora__date__lte=fecha_hasta)# Ejemplo de cómo el informe ahora filtra por fecha
+if fecha_desde:
+    accesos = accesos.filter(fecha_hora__date__gte=fecha_desde)
+if fecha_hasta:
+    accesos = accesos.filter(fecha_hora__date__lte=fecha_hasta)            <a href="{% url 'appi:informe_general_pdf' %}?{{ request.GET.urlencode }}" class="btn-custom btn-danger-custom hover-lift">
+                <i class="fas fa-file-pdf"></i>
+                Descargar PDF
+            </a>
             <a href="{% url 'appi:accesos_por_usuario' %}" class="btn-custom btn-secondary-custom hover-lift">
                 <i class="fas fa-users"></i>
                 Por Usuario
@@ -58,10 +70,13 @@
                         <label>Fecha Hasta</label>
                         <input type="date" name="fecha_hasta" value="{{ request.GET.fecha_hasta }}" class="form-control-custom">
                     </div>
-                    <div style="display: flex; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button type="submit" class="btn-custom btn-primary-custom">
                             <i class="fas fa-search"></i> Buscar
                         </button>
+                        <a href="{% url 'appi:informe_general_pdf' %}?{{ request.GET.urlencode }}" class="btn-custom btn-danger-custom">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
                         <a href="{% url 'appi:lista_accesos' %}" class="btn-custom btn-secondary-custom">
                             <i class="fas fa-times"></i> Limpiar
                         </a>

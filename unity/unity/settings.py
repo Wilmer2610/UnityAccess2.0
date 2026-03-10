@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False') == '1'
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ['1', 'true', 'yes']
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
 
@@ -147,6 +147,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/appi/login/'
 LOGIN_REDIRECT_URL = '/appi/'
 LOGOUT_REDIRECT_URL = '/appi/login/'
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Configuración de correo (SendGrid)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'apikey'
+EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')
+DEFAULT_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'no-reply@unityaccess.com')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 FORMSPREE_FORM_ID = None
 FORMSPREE_ATTACH_FILE = False

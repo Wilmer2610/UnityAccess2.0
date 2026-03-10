@@ -43,17 +43,24 @@ def enviar_qr_por_email(request=None, usuario=None):
     try:
         from io import BytesIO
         import qrcode
+        from django.core.mail import EmailMultiAlternatives
+        from django.conf import settings
+        
         img = qrcode.make(usuario.numero_documento)
         buffer = BytesIO()
         img.save(buffer, format='PNG')
-        buffer.seek(0)
+        qr_image = buffer.getvalue()
+        
         qr_url = None
         if request is not None:
             qr_url = request.build_absolute_uri(
                 reverse('appi:qr_usuario_png', kwargs={'id': usuario.id})
             )
-        body_text = f'Hola {usuario.nombre_completo}, descarga tu código QR: {qr_url if qr_url else ""}'
-        body_html = f"""
+        
+        subject = 'UnityAccess – Tu Código QR de Acceso'
+        text_content = f'Hola {usuario.nombre_completo}, tu número de documento es {usuario.numero_documento}. Puedes descargar tu código QR aquí: {qr_url if qr_url else ""}'
+        
+        html_content = f"""
         <div style='font-family: Inter, Arial, sans-serif; background:#0f172a; padding:20px; color:#e5e7eb;'>
             <div style='max-width:600px; margin:auto; background:#111827; border-radius:12px; overflow:hidden;'>
                 <div style='background:linear-gradient(135deg,#3b82f6,#06b6d4); padding:16px 20px; color:white;'>
@@ -73,113 +80,26 @@ def enviar_qr_por_email(request=None, usuario=None):
         </div>
         """
 
-        sg_key = os.getenv('SENDGRID_API_KEY')
-        sg_from = os.getenv('SENDGRID_FROM_EMAIL')
-        service_url = os.getenv('MAIL_SERVICE_URL', 'http://127.0.0.1:5000/send-qr')
-        try:
-            import requests
-            payload = {
-                'email': usuario.email,
-                'name': usuario.nombre_completo,
-                'documento': usuario.numero_documento,
-                'subject': 'Código QR de acceso',
-                'text': body_text,
-                'html': body_html,
-                'qr_png_base64': base64.b64encode(buffer.getvalue()).decode('ascii')
-            }
-            resp = requests.post(service_url, json=payload, timeout=10)
-            if 200 <= resp.status_code < 300 and resp.json().get('ok'):
-                if request is not None:
-                    messages.success(request, f'Correo enviado vía servicio a {usuario.email}.')
-                return True
-        except Exception:
-            pass
-        if sg_key and sg_from:
-            try:
-                import requests
-                payload = {
-                    'personalizations': [
-                        {
-                            'to': [{'email': usuario.email}],
-                            'subject': 'Código QR de acceso'
-                        }
-                    ],
-                    'from': {'email': sg_from},
-                    'content': [
-                        {'type': 'text/plain', 'value': body_text},
-                        {'type': 'text/html', 'value': body_html}
-                    ],
-                    'attachments': [
-                        {
-                            'content': base64.b64encode(buffer.getvalue()).decode('ascii'),
-                            'filename': f'qr_{usuario.numero_documento}.png',
-                            'type': 'image/png'
-                        }
-                    ]
-                }
-                headers = {
-                    'Authorization': f'Bearer {sg_key}',
-                    'Content-Type': 'application/json'
-                }
-                resp = requests.post('https://api.sendgrid.com/v3/mail/send', headers=headers, data=json.dumps(payload), timeout=10)
-                if 200 <= resp.status_code < 300:
-                    if request is not None:
-                        messages.success(request, f'Correo enviado por SendGrid a {usuario.email}.')
-                    return True
-                else:
-                    if request is not None:
-                        messages.error(request, f'SendGrid no aceptó el envío ({resp.status_code}). {resp.text[:200]}')
-            except Exception:
-                if request is not None:
-                    messages.error(request, 'Error al enviar con SendGrid.')
-
-        try:
-            host = os.getenv('SMTP_HOST')
-            port = int(os.getenv('SMTP_PORT', '587'))
-            user = os.getenv('SMTP_USER')
-            password = os.getenv('SMTP_PASSWORD')
-            use_tls = os.getenv('SMTP_USE_TLS', '1').lower() in ['1', 'true', 'yes']
-            if host and user and password:
-                msg = SMTPEmailMessage()
-                msg['Subject'] = 'Código QR de acceso'
-                msg['From'] = user
-                msg['To'] = usuario.email
-                msg.set_content(body_text)
-                msg.add_alternative(body_html, subtype='html')
-                msg.add_attachment(buffer.getvalue(), maintype='image', subtype='png', filename=f'qr_{usuario.numero_documento}.png')
-                with smtplib.SMTP(host, port, timeout=15) as smtp:
-                    if use_tls:
-                        smtp.starttls()
-                    smtp.login(user, password)
-                    smtp.send_message(msg)
-                if request is not None:
-                    messages.success(request, f'Correo enviado por SMTP a {usuario.email}.')
-                return True
-        except Exception:
-            if request is not None:
-                messages.error(request, 'Fallo envío SMTP. Verifica variables SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_USE_TLS.')
-
-        email = EmailMessage(
-            subject='Código QR de acceso',
-            body=body_text,
-            to=[usuario.email]
+        msg = EmailMultiAlternatives(
+            subject, 
+            text_content, 
+            settings.DEFAULT_FROM_EMAIL, 
+            [usuario.email]
         )
-        email.attach(f'qr_{usuario.numero_documento}.png', buffer.getvalue(), 'image/png')
-        email.send(fail_silently=True)
+        msg.attach_alternative(html_content, "text/html")
+        
+        # Adjuntar el código QR como imagen
+        msg.attach('codigo_qr.png', qr_image, 'image/png')
+        
+        msg.send()
+        
         if request is not None:
-            messages.warning(request, 'No hay proveedor configurado. Se usó backend local de desarrollo.')
-        return False
-    except Exception:
-        try:
-            email = EmailMessage(
-                subject='Código QR de acceso',
-                body=f'Hola {usuario.nombre_completo}, no fue posible adjuntar el QR. Usa tu documento {usuario.numero_documento} para generar el código en el sistema.',
-                to=[usuario.email]
-            )
-            email.send(fail_silently=True)
-        finally:
-            if request is not None:
-                messages.error(request, 'Fallo al generar o enviar el QR por correo.')
+            messages.success(request, f'Correo con QR enviado a {usuario.email}.')
+        return True
+        
+    except Exception as e:
+        if request is not None:
+            messages.warning(request, f'No se pudo enviar el correo: {str(e)}')
         return False
 
 # Vista de login
@@ -431,58 +351,31 @@ def qr_usuario_png(request, id):
 @user_passes_test(es_administrador)
 def probar_correo(request):
     dest = request.GET.get('dest') or request.user.email
-    sg_key = os.getenv('SENDGRID_API_KEY')
-    sg_from = os.getenv('SENDGRID_FROM_EMAIL')
-    if sg_key and sg_from:
-        try:
-            import requests
-            payload = {
-                'personalizations': [
-                    {
-                        'to': [{'email': dest}],
-                        'subject': 'Prueba SendGrid'
-                    }
-                ],
-                'from': {'email': sg_from},
-                'content': [{'type': 'text/plain', 'value': 'Correo de prueba SendGrid desde UnityAccess'}]
-            }
-            headers = {
-                'Authorization': f'Bearer {sg_key}',
-                'Content-Type': 'application/json'
-            }
-            resp = requests.post('https://api.sendgrid.com/v3/mail/send', headers=headers, data=json.dumps(payload), timeout=10)
-            return JsonResponse({'ok': 200 <= resp.status_code < 300, 'status': resp.status_code, 'body': resp.text[:200], 'provider': 'sendgrid'})
-        except Exception as e:
-            return JsonResponse({'ok': False, 'message': str(e), 'provider': 'sendgrid'})
-    host = os.getenv('SMTP_HOST')
-    port = int(os.getenv('SMTP_PORT', '587'))
-    user = os.getenv('SMTP_USER')
-    password = os.getenv('SMTP_PASSWORD')
-    use_tls = os.getenv('SMTP_USE_TLS', '1').lower() in ['1', 'true', 'yes']
-    detail = {
-        'dest': dest,
-        'host': host,
-        'port': port,
-        'user': user,
-        'use_tls': use_tls,
-        'provider': 'smtp'
-    }
+    
+    # Intentar usar la configuración de Django (Settings) primero
     try:
-        if not all([dest, host, user, password]):
-            return JsonResponse({'ok': False, 'message': 'Variables SMTP incompletas', 'detail': detail})
-        msg = SMTPEmailMessage()
-        msg['Subject'] = 'Prueba SMTP'
-        msg['From'] = user
-        msg['To'] = dest
-        msg.set_content('Correo de prueba SMTP desde UnityAccess')
-        with smtplib.SMTP(host, port, timeout=15) as smtp:
-            if use_tls:
-                smtp.starttls()
-            smtp.login(user, password)
-            smtp.send_message(msg)
-        return JsonResponse({'ok': True, 'message': 'Correo de prueba enviado', 'detail': detail})
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        send_mail(
+            'Prueba de configuración UnityAccess',
+            'Este es un correo de prueba para verificar la configuración de SendGrid en UnityAccess.',
+            settings.DEFAULT_FROM_EMAIL,
+            [dest],
+            fail_silently=False,
+        )
+        return JsonResponse({
+            'ok': True, 
+            'message': f'Correo enviado exitosamente a {dest} usando la configuración de Django.',
+            'provider': settings.EMAIL_BACKEND
+        })
     except Exception as e:
-        return JsonResponse({'ok': False, 'message': str(e), 'detail': detail})
+        # Si falla la configuración de Django, mostrar detalle del error
+        return JsonResponse({
+            'ok': False, 
+            'message': f'Error al enviar correo: {str(e)}',
+            'detail': 'Verifica que SENDGRID_API_KEY y SENDGRID_FROM_EMAIL estén configurados correctamente.'
+        })
 
 # CRUD DE REGISTROS DE ACCESO
 
@@ -560,6 +453,16 @@ def accesos_por_usuario(request):
 def informe_usuario_pdf(request, numero_documento):
     usuario = get_object_or_404(Usuario, numero_documento=numero_documento)
     accesos = RegistroAcceso.objects.filter(usuario=usuario).order_by('fecha_hora')
+    
+    # Filtros de fecha opcionales
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    
+    if fecha_desde:
+        accesos = accesos.filter(fecha_hora__date__gte=fecha_desde)
+    if fecha_hasta:
+        accesos = accesos.filter(fecha_hora__date__lte=fecha_hasta)
+        
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="informe_{usuario.numero_documento}.pdf"'
     pdf = canvas.Canvas(response, pagesize=letter)
@@ -576,6 +479,9 @@ def informe_usuario_pdf(request, numero_documento):
         pdf.drawString(95, height - 45, 'UnityAccess - Informe de Accesos')
         pdf.setFont('Helvetica', 11)
         pdf.drawString(95, height - 62, f'Usuario: {usuario.nombre_completo} ({usuario.numero_documento})')
+        if fecha_desde or fecha_hasta:
+            rango = f"Periodo: {fecha_desde or 'Inicio'} a {fecha_hasta or 'Fin'}"
+            pdf.drawString(95, height - 75, rango)
         pdf.setFillColor(colors.HexColor('#e5e7eb'))
         pdf.setFont('Helvetica', 9)
         pdf.drawRightString(width - 25, height - 20, timezone.now().strftime('%d/%m/%Y %H:%M'))
@@ -639,6 +545,137 @@ def informe_usuario_pdf(request, numero_documento):
             pdf.setFillColor(colors.HexColor('#374151'))
             pdf.setFont('Helvetica-Bold', 12)
             pdf.drawString(25, y, 'Registro individual de entradas y salidas')
+            y -= 10
+            table_header(y)
+            y -= 30
+
+    pdf.showPage()
+    pdf.save()
+    return response
+
+@never_cache
+@never_cache
+@never_cache
+@login_required
+@user_passes_test(es_administrador)
+def informe_general_pdf(request):
+    """Genera un informe PDF con todos los registros de acceso según los filtros aplicados"""
+    accesos = RegistroAcceso.objects.select_related('usuario').order_by('-fecha_hora')
+    
+    # Filtros opcionales
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    tipo_acceso = request.GET.get('tipo_acceso')
+    usuario_query = request.GET.get('usuario')
+    
+    if fecha_desde:
+        accesos = accesos.filter(fecha_hora__date__gte=fecha_desde)
+    if fecha_hasta:
+        accesos = accesos.filter(fecha_hora__date__lte=fecha_hasta)
+    if tipo_acceso:
+        accesos = accesos.filter(tipo_acceso=tipo_acceso)
+    if usuario_query:
+        accesos = accesos.filter(
+            Q(usuario__nombres__icontains=usuario_query) |
+            Q(usuario__apellidos__icontains=usuario_query) |
+            Q(usuario__numero_documento__icontains=usuario_query)
+        )
+        
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="informe_general_accesos.pdf"'
+    pdf = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    def header():
+        pdf.setFillColor(colors.HexColor('#0f172a'))
+        pdf.rect(0, height - 80, width, 80, fill=1, stroke=0)
+        logo_path = finders.find('imagen/logo.png')
+        if logo_path:
+            pdf.drawImage(logo_path, 25, height - 75, width=60, height=60, preserveAspectRatio=True, mask='auto')
+        pdf.setFillColor(colors.white)
+        pdf.setFont('Helvetica-Bold', 18)
+        pdf.drawString(95, height - 45, 'UnityAccess - Informe General de Accesos')
+        pdf.setFont('Helvetica', 11)
+        pdf.drawString(95, height - 62, 'Historial completo de entradas y salidas')
+        
+        # Información de filtros en el header
+        filtro_text = []
+        if fecha_desde or fecha_hasta:
+            filtro_text.append(f"Periodo: {fecha_desde or 'Inicio'} a {fecha_hasta or 'Fin'}")
+        if tipo_acceso:
+            filtro_text.append(f"Tipo: {tipo_acceso}")
+        if usuario_query:
+            filtro_text.append(f"Usuario: {usuario_query}")
+            
+        if filtro_text:
+            pdf.drawString(95, height - 75, " | ".join(filtro_text))
+            
+        pdf.setFillColor(colors.HexColor('#e5e7eb'))
+        pdf.setFont('Helvetica', 9)
+        pdf.drawRightString(width - 25, height - 20, timezone.now().strftime('%d/%m/%Y %H:%M'))
+
+    def table_header(y):
+        pdf.setFillColor(colors.HexColor('#1f2937'))
+        pdf.roundRect(25, y - 22, width - 50, 24, 6, fill=1, stroke=0)
+        pdf.setFillColor(colors.white)
+        pdf.setFont('Helvetica-Bold', 10)
+        pdf.drawString(35, y - 16, 'Usuario')
+        pdf.drawString(160, y - 16, 'Documento')
+        pdf.drawString(250, y - 16, 'Fecha/Hora')
+        pdf.drawString(360, y - 16, 'Tipo')
+        pdf.drawString(450, y - 16, 'Observaciones')
+
+    def table_row(y, nombre, documento, fecha_hora, tipo, obs):
+        pdf.setFillColor(colors.HexColor('#111827'))
+        pdf.roundRect(25, y - 20, width - 50, 22, 6, fill=1, stroke=0)
+        pdf.setFillColor(colors.HexColor('#e5e7eb'))
+        pdf.setFont('Helvetica', 9)
+        
+        # Truncar nombre si es largo
+        nombre_trunc = nombre[:20] + '..' if len(nombre) > 20 else nombre
+        pdf.drawString(35, y - 14, nombre_trunc)
+        pdf.drawString(160, y - 14, documento)
+        pdf.drawString(250, y - 14, fecha_hora)
+        
+        # Color según tipo
+        if tipo == 'entrada':
+            pdf.setFillColor(colors.HexColor('#34d399'))
+        else:
+            pdf.setFillColor(colors.HexColor('#fbbf24'))
+        
+        pdf.drawString(360, y - 14, tipo.title())
+        pdf.setFillColor(colors.HexColor('#e5e7eb'))
+        
+        obs_trunc = (obs or '-')[:15] + '..' if obs and len(obs) > 15 else (obs or '-')
+        pdf.drawString(450, y - 14, obs_trunc)
+
+    header()
+
+    y = height - 110
+    pdf.setFillColor(colors.HexColor('#374151'))
+    pdf.setFont('Helvetica-Bold', 12)
+    pdf.drawString(25, y, 'Listado de Registros de Acceso')
+    y -= 10
+    table_header(y)
+    y -= 30
+
+    for acceso in accesos:
+        nombre = acceso.usuario.nombre_completo
+        doc = acceso.usuario.numero_documento
+        fh = acceso.fecha_hora.strftime('%d/%m/%Y %H:%M')
+        tipo = acceso.tipo_acceso
+        obs = acceso.observaciones
+        
+        table_row(y, nombre, doc, fh, tipo, obs)
+        y -= 26
+        
+        if y < 80:
+            pdf.showPage()
+            header()
+            y = height - 110
+            pdf.setFillColor(colors.HexColor('#374151'))
+            pdf.setFont('Helvetica-Bold', 12)
+            pdf.drawString(25, y, 'Listado de Registros de Acceso')
             y -= 10
             table_header(y)
             y -= 30

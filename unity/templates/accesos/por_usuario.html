@@ -15,7 +15,11 @@
                 <p>Resumen de entradas y salidas organizadas por usuario</p>
             </div>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            <a href="{% url 'appi:informe_general_pdf' %}" class="btn-custom btn-danger-custom hover-lift">
+                <i class="fas fa-file-pdf"></i>
+                Descargar Informe General
+            </a>
             <a href="{% url 'appi:lista_accesos' %}" class="btn-custom btn-secondary-custom">
                 <i class="fas fa-list"></i>
                 Ver Registros

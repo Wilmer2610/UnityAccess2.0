@@ -28,6 +28,7 @@ urlpatterns = [
     path('accesos/crear/', views.crear_acceso, name='crear_acceso'),
     path('accesos/usuarios/', views.accesos_por_usuario, name='accesos_por_usuario'),
     path('accesos/usuarios/<str:numero_documento>/pdf/', views.informe_usuario_pdf, name='informe_usuario_pdf'),
+    path('accesos/general/pdf/', views.informe_general_pdf, name='informe_general_pdf'),
     
     # Control de Acceso QR
     path('control-qr/', views.control_qr, name='control_qr'),
