@@ -13,7 +13,29 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.cache import never_cache
 import json
 from .models import Usuario, RegistroAcceso
-from .forms import UsuarioForm, RegistroAccesoForm, BuscarUsuarioForm
+from .forms import UsuarioForm, RegistroAccesoForm, BuscarUsuarioForm, RegistroPersonalForm
+from django.contrib.auth.models import Group
+
+@never_cache
+@login_required
+@user_passes_test(es_administrador)
+def crear_personal(request):
+    """Vista para crear usuarios del sistema (Vigilantes)"""
+    if request.method == 'POST':
+        form = RegistroPersonalForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Asignar grupo Vigilantes
+            grupo_vigilantes, created = Group.objects.get_or_create(name='Vigilantes')
+            user.groups.add(grupo_vigilantes)
+            messages.success(request, f'Vigilante {user.username} creado exitosamente.')
+            return redirect('appi:dashboard')
+        else:
+            messages.error(request, 'Error al crear el usuario. Verifique los datos.')
+    else:
+        form = RegistroPersonalForm()
+    
+    return render(request, 'usuarios/crear_personal.html', {'form': form})
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
