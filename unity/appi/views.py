@@ -381,7 +381,7 @@ def probar_correo(request):
         
         send_mail(
             'Prueba de configuración UnityAccess',
-            'Este es un correo de prueba para verificar la configuración de SendGrid en UnityAccess.',
+            'Este es un correo de prueba para verificar la configuración de correo en UnityAccess.',
             settings.DEFAULT_FROM_EMAIL,
             [dest],
             fail_silently=False,
@@ -389,14 +389,37 @@ def probar_correo(request):
         return JsonResponse({
             'ok': True, 
             'message': f'Correo enviado exitosamente a {dest} usando la configuración de Django.',
-            'provider': settings.EMAIL_BACKEND
+            'provider': settings.EMAIL_BACKEND,
+            'email': {
+                'host': getattr(settings, 'EMAIL_HOST', None),
+                'port': getattr(settings, 'EMAIL_PORT', None),
+                'use_tls': getattr(settings, 'EMAIL_USE_TLS', None),
+                'host_user': getattr(settings, 'EMAIL_HOST_USER', None),
+                'from': getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+            }
         })
     except Exception as e:
-        # Si falla la configuración de Django, mostrar detalle del error
+        from django.conf import settings
         return JsonResponse({
             'ok': False, 
             'message': f'Error al enviar correo: {str(e)}',
-            'detail': 'Verifica que SENDGRID_API_KEY y SENDGRID_FROM_EMAIL estén configurados correctamente.'
+            'error_type': e.__class__.__name__,
+            'email': {
+                'host': getattr(settings, 'EMAIL_HOST', None),
+                'port': getattr(settings, 'EMAIL_PORT', None),
+                'use_tls': getattr(settings, 'EMAIL_USE_TLS', None),
+                'host_user': getattr(settings, 'EMAIL_HOST_USER', None),
+                'from': getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+            },
+            'env': {
+                'SMTP_HOST': bool(os.environ.get('SMTP_HOST')),
+                'SMTP_PORT': bool(os.environ.get('SMTP_PORT')),
+                'SMTP_USE_TLS': bool(os.environ.get('SMTP_USE_TLS')),
+                'SMTP_USER': bool(os.environ.get('SMTP_USER')),
+                'SMTP_PASSWORD': bool(os.environ.get('SMTP_PASSWORD')),
+                'SMTP_FROM_EMAIL': bool(os.environ.get('SMTP_FROM_EMAIL')),
+                'BREVO_API_KEY': bool(os.environ.get('BREVO_API_KEY')),
+            }
         })
 
 # CRUD DE REGISTROS DE ACCESO
