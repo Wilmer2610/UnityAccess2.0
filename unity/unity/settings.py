@@ -164,7 +164,14 @@ if (not _smtp_user) and _brevo_api_key:
 
 EMAIL_HOST_USER = _smtp_user
 EMAIL_HOST_PASSWORD = _smtp_password
-DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'no-reply@unityaccess.com'))
+_default_from_email = os.environ.get(
+    'SMTP_FROM_EMAIL',
+    os.environ.get('DEFAULT_FROM_EMAIL', ''),
+)
+if (not _default_from_email) or ('@' not in _default_from_email):
+    _default_from_email = 'no-reply@unityaccess.com'
+
+DEFAULT_FROM_EMAIL = _default_from_email
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 FORMSPREE_FORM_ID = None
 FORMSPREE_ATTACH_FILE = False
