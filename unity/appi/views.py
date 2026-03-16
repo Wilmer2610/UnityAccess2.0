@@ -372,13 +372,11 @@ def qr_usuario_png(request, id):
 @login_required
 @user_passes_test(es_administrador)
 def probar_correo(request):
-    dest = request.GET.get('dest') or request.user.email
-    
-    # Intentar usar la configuración de Django (Settings) primero
     try:
+        dest = request.GET.get('dest') or request.user.email
         from django.core.mail import send_mail
         from django.conf import settings
-        
+
         send_mail(
             'Prueba de configuración UnityAccess',
             'Este es un correo de prueba para verificar la configuración de correo en UnityAccess.',
@@ -387,7 +385,7 @@ def probar_correo(request):
             fail_silently=False,
         )
         return JsonResponse({
-            'ok': True, 
+            'ok': True,
             'message': f'Correo enviado exitosamente a {dest} usando la configuración de Django.',
             'provider': settings.EMAIL_BACKEND,
             'email': {
@@ -399,28 +397,33 @@ def probar_correo(request):
             }
         })
     except Exception as e:
-        from django.conf import settings
-        return JsonResponse({
-            'ok': False, 
-            'message': f'Error al enviar correo: {str(e)}',
-            'error_type': e.__class__.__name__,
-            'email': {
-                'host': getattr(settings, 'EMAIL_HOST', None),
-                'port': getattr(settings, 'EMAIL_PORT', None),
-                'use_tls': getattr(settings, 'EMAIL_USE_TLS', None),
-                'host_user': getattr(settings, 'EMAIL_HOST_USER', None),
-                'from': getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-            },
-            'env': {
-                'SMTP_HOST': bool(os.environ.get('SMTP_HOST')),
-                'SMTP_PORT': bool(os.environ.get('SMTP_PORT')),
-                'SMTP_USE_TLS': bool(os.environ.get('SMTP_USE_TLS')),
-                'SMTP_USER': bool(os.environ.get('SMTP_USER')),
-                'SMTP_PASSWORD': bool(os.environ.get('SMTP_PASSWORD')),
-                'SMTP_FROM_EMAIL': bool(os.environ.get('SMTP_FROM_EMAIL')),
-                'BREVO_API_KEY': bool(os.environ.get('BREVO_API_KEY')),
-            }
-        })
+        try:
+            from django.conf import settings
+            dest = request.GET.get('dest') or getattr(request.user, 'email', None)
+            return JsonResponse({
+                'ok': False,
+                'message': f'Error al enviar correo: {str(e)}',
+                'error_type': e.__class__.__name__,
+                'email': {
+                    'host': getattr(settings, 'EMAIL_HOST', None),
+                    'port': getattr(settings, 'EMAIL_PORT', None),
+                    'use_tls': getattr(settings, 'EMAIL_USE_TLS', None),
+                    'host_user': getattr(settings, 'EMAIL_HOST_USER', None),
+                    'from': getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                    'dest': dest,
+                },
+                'env': {
+                    'SMTP_HOST': bool(os.environ.get('SMTP_HOST')),
+                    'SMTP_PORT': bool(os.environ.get('SMTP_PORT')),
+                    'SMTP_USE_TLS': bool(os.environ.get('SMTP_USE_TLS')),
+                    'SMTP_USER': bool(os.environ.get('SMTP_USER')),
+                    'SMTP_PASSWORD': bool(os.environ.get('SMTP_PASSWORD')),
+                    'SMTP_FROM_EMAIL': bool(os.environ.get('SMTP_FROM_EMAIL')),
+                    'BREVO_API_KEY': bool(os.environ.get('BREVO_API_KEY')),
+                }
+            }, status=500)
+        except Exception as inner:
+            return HttpResponse(f'Error interno en probar_correo: {inner}', status=500)
 
 # CRUD DE REGISTROS DE ACCESO
 
