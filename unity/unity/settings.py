@@ -148,14 +148,23 @@ LOGIN_URL = '/appi/login/'
 LOGIN_REDIRECT_URL = '/appi/'
 LOGOUT_REDIRECT_URL = '/appi/login/'
 
-# Configuración de correo (SendGrid)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')
-DEFAULT_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'no-reply@unityaccess.com')
+# Configuración de correo (Brevo vía SMTP)
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('SMTP_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.environ.get('SMTP_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('SMTP_USE_TLS', '1').lower() in ['1', 'true', 'yes']
+
+_brevo_api_key = os.environ.get('BREVO_API_KEY', '')
+_smtp_user = os.environ.get('SMTP_USER', '')
+_smtp_password = os.environ.get('SMTP_PASSWORD', '')
+if (not _smtp_password) and _brevo_api_key:
+    _smtp_password = _brevo_api_key
+if (not _smtp_user) and _brevo_api_key:
+    _smtp_user = 'apikey'
+
+EMAIL_HOST_USER = _smtp_user
+EMAIL_HOST_PASSWORD = _smtp_password
+DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'no-reply@unityaccess.com'))
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 FORMSPREE_FORM_ID = None
 FORMSPREE_ATTACH_FILE = False
