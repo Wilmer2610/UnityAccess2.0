@@ -27,6 +27,9 @@ import os
 import smtplib
 from email.message import EmailMessage as SMTPEmailMessage
 import base64
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Verificar si el usuario es administrador
 def es_administrador(user):
@@ -121,12 +124,22 @@ def enviar_qr_por_email(request=None, usuario=None):
         msg.send()
         
         if request is not None:
-            messages.success(request, f'Correo con QR enviado a {usuario.email}.')
+            try:
+                messages.success(request, f'Correo con QR enviado a {usuario.email}.')
+            except Exception:
+                pass
         return True
         
-    except Exception:
+    except Exception as e:
+        try:
+            logger.exception('Error enviando QR por email: %s', e.__class__.__name__)
+        except Exception:
+            pass
         if request is not None:
-            messages.warning(request, 'No se pudo enviar el correo con el código QR. Revisa la configuración de correo.')
+            try:
+                messages.warning(request, 'No se pudo enviar el correo con el código QR. Revisa la configuración de correo.')
+            except Exception:
+                pass
         return False
 
 # Vista de login
@@ -355,9 +368,24 @@ def eliminar_usuario(request, id):
 @user_passes_test(es_administrador)
 def enviar_qr_usuario(request, id):
     usuario = get_object_or_404(Usuario, id=id)
-    ok = enviar_qr_por_email(request, usuario)
+    try:
+        ok = enviar_qr_por_email(request, usuario)
+    except Exception as e:
+        try:
+            logger.exception('Error en enviar_qr_usuario: %s', e.__class__.__name__)
+        except Exception:
+            pass
+        ok = False
     if ok:
-        messages.success(request, f'Código QR enviado a {usuario.email}.')
+        try:
+            messages.success(request, f'Código QR enviado a {usuario.email}.')
+        except Exception:
+            pass
+    else:
+        try:
+            messages.warning(request, 'No se pudo enviar el código QR por correo. Revisa la configuración.')
+        except Exception:
+            pass
     return redirect('appi:detalle_usuario', id=usuario.id)
 
 @never_cache
