@@ -78,6 +78,15 @@ Direcciones principales
 - Configurar DEBUG=False y SECRET_KEY seguro en settings.
 - Servir static con collectstatic y un servidor de archivos estáticos.
 
-12) Soporte
+12) Envío de correos (Brevo)
+- Para enviar el QR por correo usando Brevo (API), configura estas variables de entorno:
+  - BREVO_API_KEY: tu API Key de Brevo
+  - DEFAULT_FROM_EMAIL o SMTP_FROM_EMAIL: correo remitente verificado en Brevo
+  - BREVO_SENDER_NAME (opcional): nombre del remitente
+  - BREVO_TRANSPORT=api
+  - EMAIL_BACKEND=unity.email_backend.BrevoEmailBackend
+- Ruta de prueba de correo (requiere login): /appi/correo/test/?dest=tu_correo@dominio.com
+
+13) Soporte
 - Para extender funcionalidades (nuevos reportes, gráficas, APIs), editar views y templates.
 - Para errores del navegador, abrir la consola para ver mensajes.

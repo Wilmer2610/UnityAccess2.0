@@ -16,3 +16,7 @@ services:
         value: 4
       - key: DJANGO_ALLOWED_HOSTS
         value: ".onrender.com"
+      - key: BREVO_TRANSPORT
+        value: "api"
+      - key: EMAIL_BACKEND
+        value: "unity.email_backend.BrevoEmailBackend"
