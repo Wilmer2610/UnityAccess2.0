@@ -367,26 +367,37 @@ def eliminar_usuario(request, id):
 @login_required
 @user_passes_test(es_administrador)
 def enviar_qr_usuario(request, id):
-    usuario = get_object_or_404(Usuario, id=id)
     try:
-        ok = enviar_qr_por_email(request, usuario)
+        usuario = get_object_or_404(Usuario, id=id)
+        try:
+            ok = enviar_qr_por_email(request, usuario)
+        except Exception as e:
+            try:
+                logger.exception('Error en enviar_qr_usuario: %s', e.__class__.__name__)
+            except Exception:
+                pass
+            ok = False
+        if ok:
+            try:
+                messages.success(request, f'Código QR enviado a {usuario.email}.')
+            except Exception:
+                pass
+        else:
+            try:
+                messages.warning(request, 'No se pudo enviar el código QR por correo. Revisa la configuración.')
+            except Exception:
+                pass
+        return redirect('appi:detalle_usuario', id=usuario.id)
     except Exception as e:
         try:
-            logger.exception('Error en enviar_qr_usuario: %s', e.__class__.__name__)
+            logger.exception('Fallo inesperado en enviar_qr_usuario: %s', e.__class__.__name__)
         except Exception:
             pass
-        ok = False
-    if ok:
         try:
-            messages.success(request, f'Código QR enviado a {usuario.email}.')
+            messages.error(request, 'Ocurrió un error interno al enviar el QR.')
         except Exception:
             pass
-    else:
-        try:
-            messages.warning(request, 'No se pudo enviar el código QR por correo. Revisa la configuración.')
-        except Exception:
-            pass
-    return redirect('appi:detalle_usuario', id=usuario.id)
+        return redirect('appi:lista_usuarios')
 
 @never_cache
 def qr_usuario_publico(request, token):
