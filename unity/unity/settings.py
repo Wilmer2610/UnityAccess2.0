@@ -148,18 +148,28 @@ LOGIN_URL = '/appi/login/'
 LOGIN_REDIRECT_URL = '/appi/'
 LOGOUT_REDIRECT_URL = '/appi/login/'
 
-# Configuración de correo (Brevo vía SMTP)
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+# Configuración de correo (Brevo)
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', '')
+BREVO_TIMEOUT_SECONDS = int(os.environ.get('BREVO_TIMEOUT_SECONDS', '20'))
+
+_brevo_transport = os.environ.get('BREVO_TRANSPORT', '').strip().lower()
+_email_backend_env = os.environ.get('EMAIL_BACKEND', '').strip()
+if _email_backend_env:
+    EMAIL_BACKEND = _email_backend_env
+elif _brevo_transport == 'api':
+    EMAIL_BACKEND = 'unity.email_backend.BrevoEmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('SMTP_HOST', 'smtp-relay.brevo.com')
 EMAIL_PORT = int(os.environ.get('SMTP_PORT', '587'))
 EMAIL_USE_TLS = os.environ.get('SMTP_USE_TLS', '1').lower() in ['1', 'true', 'yes']
 
-_brevo_api_key = os.environ.get('BREVO_API_KEY', '')
 _smtp_user = os.environ.get('SMTP_USER', '')
 _smtp_password = os.environ.get('SMTP_PASSWORD', '')
-if (not _smtp_password) and _brevo_api_key:
-    _smtp_password = _brevo_api_key
-if (not _smtp_user) and _brevo_api_key:
+if (not _smtp_password) and BREVO_API_KEY:
+    _smtp_password = BREVO_API_KEY
+if (not _smtp_user) and BREVO_API_KEY:
     _smtp_user = 'apikey'
 
 EMAIL_HOST_USER = _smtp_user
