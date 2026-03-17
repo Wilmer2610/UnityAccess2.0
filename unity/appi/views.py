@@ -67,6 +67,7 @@ def enviar_qr_por_email(request=None, usuario=None):
         import qrcode
         from django.core.mail import EmailMultiAlternatives
         from django.conf import settings
+        from django.core import signing
         
         img = qrcode.make(usuario.numero_documento)
         buffer = BytesIO()
@@ -75,8 +76,9 @@ def enviar_qr_por_email(request=None, usuario=None):
         
         qr_url = None
         if request is not None:
+            token = signing.dumps({'id': usuario.id}, salt='qr_usuario_publico')
             qr_url = request.build_absolute_uri(
-                reverse('appi:qr_usuario_png', kwargs={'id': usuario.id})
+                reverse('appi:qr_usuario_publico', kwargs={'token': token})
             )
         
         subject = 'UnityAccess – Tu Código QR de Acceso'
@@ -96,6 +98,9 @@ def enviar_qr_por_email(request=None, usuario=None):
                         Puedes descargar el código QR desde:
                         <a href='{qr_url if qr_url else ''}' style='color:#60a5fa;'>Descargar QR</a>
                     </p>
+                    <div style='margin-top:16px;'>
+                        <img src='{qr_url if qr_url else ''}' alt='Código QR' style='max-width:220px; border-radius:10px; border:1px solid rgba(255,255,255,.12);' />
+                    </div>
                     <p style='font-size:12px; color:#9ca3af;'>Si no ves la imagen, usa el enlace de descarga.</p>
                 </div>
             </div>
@@ -119,9 +124,9 @@ def enviar_qr_por_email(request=None, usuario=None):
             messages.success(request, f'Correo con QR enviado a {usuario.email}.')
         return True
         
-    except Exception as e:
+    except Exception:
         if request is not None:
-            messages.warning(request, f'No se pudo enviar el correo: {str(e)}')
+            messages.warning(request, 'No se pudo enviar el correo con el código QR. Revisa la configuración de correo.')
         return False
 
 # Vista de login
@@ -354,6 +359,32 @@ def enviar_qr_usuario(request, id):
     if ok:
         messages.success(request, f'Código QR enviado a {usuario.email}.')
     return redirect('appi:detalle_usuario', id=usuario.id)
+
+@never_cache
+def qr_usuario_publico(request, token):
+    from django.core import signing
+    try:
+        payload = signing.loads(
+            token,
+            salt='qr_usuario_publico',
+            max_age=getattr(settings, 'QR_PUBLIC_MAX_AGE_SECONDS', 30 * 24 * 60 * 60),
+        )
+        usuario_id = payload.get('id')
+        if not usuario_id:
+            return HttpResponse(status=404)
+    except signing.SignatureExpired:
+        return HttpResponse(status=410)
+    except signing.BadSignature:
+        return HttpResponse(status=404)
+
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    from io import BytesIO
+    import qrcode
+    img = qrcode.make(usuario.numero_documento)
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    return HttpResponse(buffer.getvalue(), content_type='image/png')
 
 @never_cache
 @login_required

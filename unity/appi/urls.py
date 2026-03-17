@@ -22,6 +22,7 @@ urlpatterns = [
     path('usuarios/<int:id>/eliminar/', views.eliminar_usuario, name='eliminar_usuario'),
     path('usuarios/<int:id>/enviar-qr/', views.enviar_qr_usuario, name='enviar_qr_usuario'),
     path('usuarios/<int:id>/qr.png', views.qr_usuario_png, name='qr_usuario_png'),
+    path('qr/<str:token>.png', views.qr_usuario_publico, name='qr_usuario_publico'),
     path('correo/test/', views.probar_correo, name='probar_correo'),
     
     # CRUD Registros de Acceso
