@@ -24,6 +24,7 @@ from django.contrib.staticfiles import finders
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.urls import reverse
+from unity.email_backend import brevo_send
 import os
 import smtplib
 from email.message import EmailMessage as SMTPEmailMessage
@@ -506,7 +507,10 @@ def password_reset_test(request):
             return JsonResponse({'ok': False, 'message': 'Sin email'}, status=400)
         form = PasswordResetForm({'email': email})
         if not form.is_valid():
-            return JsonResponse({'ok': False, 'message': 'Email no válido o no encontrado'})
+            return JsonResponse({'ok': False, 'message': 'Email no válido o no encontrado', 'errors': form.errors})
+        users = list(form.get_users(email))
+        if not users:
+            return JsonResponse({'ok': False, 'message': 'No existe usuario activo con ese email en la base de datos'})
         form.save(
             request=request,
             use_https=True,
@@ -514,9 +518,48 @@ def password_reset_test(request):
             subject_template_name='registration/password_reset_subject.txt',
             from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
         )
-        return JsonResponse({'ok': True, 'message': f'Enviado a {email}', 'provider': settings.EMAIL_BACKEND})
+        return JsonResponse({
+            'ok': True,
+            'message': f'Enviado a {email}',
+            'provider': settings.EMAIL_BACKEND,
+            'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+            'matched_users': [getattr(u, 'username', None) for u in users if getattr(u, 'username', None)],
+        })
     except Exception as e:
         return JsonResponse({'ok': False, 'message': str(e), 'error_type': e.__class__.__name__}, status=500)
+
+@never_cache
+@login_required
+@user_passes_test(es_administrador)
+def brevo_debug(request):
+    api_key = (getattr(settings, 'BREVO_API_KEY', None) or '').strip()
+    if not api_key:
+        return JsonResponse({'ok': False, 'message': 'BREVO_API_KEY no está configurada'}, status=500)
+    dest = (request.GET.get('dest') or request.GET.get('email') or request.user.email or '').strip()
+    if not dest:
+        return JsonResponse({'ok': False, 'message': 'Sin destinatario'}, status=400)
+    sender_email = (getattr(settings, 'DEFAULT_FROM_EMAIL', '') or '').strip()
+    sender_name = (getattr(settings, 'BREVO_SENDER_NAME', '') or '').strip() or None
+    if (not sender_email) or ('@' not in sender_email):
+        return JsonResponse({'ok': False, 'message': 'DEFAULT_FROM_EMAIL no es válido', 'from_email': sender_email}, status=500)
+    subject = (request.GET.get('subject') or 'Prueba Brevo UnityAccess').strip()
+    payload = {
+        'sender': {'email': sender_email},
+        'to': [{'email': dest}],
+        'subject': subject,
+        'textContent': 'Prueba de envío desde UnityAccess usando Brevo.',
+        'htmlContent': '<p>Prueba de envío desde <strong>UnityAccess</strong> usando Brevo.</p>',
+    }
+    if sender_name:
+        payload['sender']['name'] = sender_name
+    result = brevo_send(payload, api_key, timeout_seconds=getattr(settings, 'BREVO_TIMEOUT_SECONDS', 20))
+    return JsonResponse({
+        'ok': bool(result.get('ok')),
+        'provider': 'brevo_api',
+        'from_email': sender_email,
+        'to': dest,
+        'result': result,
+    }, status=200 if result.get('ok') else 500)
 
 # CRUD DE REGISTROS DE ACCESO
 

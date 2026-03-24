@@ -25,6 +25,7 @@ urlpatterns = [
     path('qr/<str:token>.png', views.qr_usuario_publico, name='qr_usuario_publico'),
     path('correo/test/', views.probar_correo, name='probar_correo'),
     path('correo/password-reset-test/', views.password_reset_test, name='password_reset_test'),
+    path('correo/brevo-debug/', views.brevo_debug, name='brevo_debug'),
     
     # CRUD Registros de Acceso
     path('accesos/', views.lista_accesos, name='lista_accesos'),

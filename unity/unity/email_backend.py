@@ -7,6 +7,50 @@ from django.conf import settings
 from django.core.mail.backends.base import BaseEmailBackend
 
 
+def brevo_send(payload, api_key, timeout_seconds=20):
+    data = json.dumps(payload).encode('utf-8')
+    req = Request(
+        'https://api.brevo.com/v3/smtp/email',
+        data=data,
+        headers={
+            'Content-Type': 'application/json',
+            'api-key': api_key,
+            'Accept': 'application/json',
+        },
+        method='POST',
+    )
+    try:
+        with urlopen(req, timeout=timeout_seconds) as resp:
+            status = getattr(resp, 'status', 200)
+            body = ''
+            try:
+                body = resp.read().decode('utf-8', errors='ignore')
+            except Exception:
+                body = ''
+            parsed = None
+            if body:
+                try:
+                    parsed = json.loads(body)
+                except Exception:
+                    parsed = None
+            return {'ok': 200 <= status < 300, 'status': status, 'body': body, 'json': parsed}
+    except HTTPError as e:
+        body = ''
+        try:
+            body = e.read().decode('utf-8', errors='ignore')
+        except Exception:
+            body = ''
+        parsed = None
+        if body:
+            try:
+                parsed = json.loads(body)
+            except Exception:
+                parsed = None
+        return {'ok': False, 'status': e.code, 'body': body, 'json': parsed, 'error': str(getattr(e, 'reason', ''))}
+    except URLError as e:
+        return {'ok': False, 'status': None, 'body': '', 'json': None, 'error': str(e)}
+
+
 class BrevoEmailBackend(BaseEmailBackend):
     def send_messages(self, email_messages):
         if not email_messages:
@@ -82,32 +126,12 @@ class BrevoEmailBackend(BaseEmailBackend):
 
         if atts:
             payload['attachment'] = atts
-
-        data = json.dumps(payload).encode('utf-8')
-        req = Request(
-            'https://api.brevo.com/v3/smtp/email',
-            data=data,
-            headers={
-                'Content-Type': 'application/json',
-                'api-key': api_key,
-                'Accept': 'application/json',
-            },
-            method='POST',
-        )
-        try:
-            with urlopen(req, timeout=getattr(settings, 'BREVO_TIMEOUT_SECONDS', 20)) as resp:
-                return 200 <= getattr(resp, 'status', 200) < 300
-        except HTTPError as e:
-            if self.fail_silently:
-                return False
-            body = ''
-            try:
-                body = e.read().decode('utf-8', errors='ignore')
-            except Exception:
-                body = ''
-            raise RuntimeError(f'Brevo API error {e.code}: {body or e.reason}')
-        except URLError as e:
-            if self.fail_silently:
-                return False
-            raise RuntimeError(f'Brevo API connection error: {e}')
+        result = brevo_send(payload, api_key, timeout_seconds=getattr(settings, 'BREVO_TIMEOUT_SECONDS', 20))
+        if result.get('ok'):
+            return True
+        if self.fail_silently:
+            return False
+        status = result.get('status')
+        body = result.get('body') or result.get('error') or ''
+        raise RuntimeError(f'Brevo API error {status}: {body}')
 
