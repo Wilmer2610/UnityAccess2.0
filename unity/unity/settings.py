@@ -33,6 +33,8 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ['1', 'true', 'yes']
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
+USE_X_FORWARDED_HOST = os.environ.get('USE_X_FORWARDED_HOST', '1').lower() in ['1', 'true', 'yes']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -150,10 +152,12 @@ LOGOUT_REDIRECT_URL = '/appi/login/'
 
 # Configuración de correo (Brevo)
 BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
-BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', '')
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', '').strip() or 'UnityAccess'
 BREVO_TIMEOUT_SECONDS = int(os.environ.get('BREVO_TIMEOUT_SECONDS', '20'))
 
 _brevo_transport = os.environ.get('BREVO_TRANSPORT', '').strip().lower()
+if (not _brevo_transport) and BREVO_API_KEY:
+    _brevo_transport = 'api'
 _email_backend_env = os.environ.get('EMAIL_BACKEND', '').strip()
 if _email_backend_env:
     EMAIL_BACKEND = _email_backend_env
@@ -174,9 +178,11 @@ if (not _smtp_user) and BREVO_API_KEY:
 
 EMAIL_HOST_USER = _smtp_user
 EMAIL_HOST_PASSWORD = _smtp_password
-_default_from_email = os.environ.get(
-    'SMTP_FROM_EMAIL',
-    os.environ.get('DEFAULT_FROM_EMAIL', ''),
+_default_from_email = (
+    os.environ.get('BREVO_SENDER_EMAIL', '')
+    or os.environ.get('BREVO_FROM_EMAIL', '')
+    or os.environ.get('SMTP_FROM_EMAIL', '')
+    or os.environ.get('DEFAULT_FROM_EMAIL', '')
 )
 if (not _default_from_email) or ('@' not in _default_from_email):
     _default_from_email = 'no-reply@unityaccess.com'
