@@ -23,5 +23,7 @@ class Command(BaseCommand):
             user.set_password(password)
             user.is_staff = True
             user.is_superuser = True
+            if email:
+                user.email = email
             user.save()
             self.stdout.write(self.style.SUCCESS(f'Admin actualizado: {username}'))

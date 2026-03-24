@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
@@ -494,6 +495,28 @@ def probar_correo(request):
             }, status=500)
         except Exception as inner:
             return HttpResponse(f'Error interno en probar_correo: {inner}', status=500)
+
+@never_cache
+@login_required
+@user_passes_test(es_administrador)
+def password_reset_test(request):
+    try:
+        email = request.GET.get('email') or request.user.email
+        if not email:
+            return JsonResponse({'ok': False, 'message': 'Sin email'}, status=400)
+        form = PasswordResetForm({'email': email})
+        if not form.is_valid():
+            return JsonResponse({'ok': False, 'message': 'Email no válido o no encontrado'})
+        form.save(
+            request=request,
+            use_https=True,
+            email_template_name='registration/password_reset_email.html',
+            subject_template_name='registration/password_reset_subject.txt',
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+        )
+        return JsonResponse({'ok': True, 'message': f'Enviado a {email}', 'provider': settings.EMAIL_BACKEND})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'message': str(e), 'error_type': e.__class__.__name__}, status=500)
 
 # CRUD DE REGISTROS DE ACCESO
 
