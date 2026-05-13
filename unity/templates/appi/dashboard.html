@@ -12,7 +12,7 @@
             </div>
             <h1 class="card-title-custom text-gradient">Dashboard</h1>
         </div>
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin: 0;">
             Bienvenido al sistema de control de acceso Unity Access. Gestiona usuarios y monitorea la actividad del sistema.
         </p>
     </div>
@@ -100,7 +100,7 @@
                 <h2 class="card-title-custom">Monitoreo en Vivo</h2>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span class="badge-custom badge-success-custom pulse-animation">
+                <span class="badge-custom badge-success-custom">
                     <i class="fas fa-circle" style="font-size: 0.6rem; margin-right: 0.5rem;"></i>
                     En línea
                 </span>
@@ -123,13 +123,13 @@
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="width: 32px; height: 32px; background: var(--gradient-tech); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem;">
+                                <div style="width: 32px; height: 32px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem;">
                                     {{ acceso.usuario.nombres|first }}{{ acceso.usuario.apellidos|first }}
                                 </div>
-                                <span style="font-weight: 500;">{{ acceso.usuario.nombre_completo }}</span>
+                                <span style="font-weight: 500; color: var(--text-main);">{{ acceso.usuario.nombre_completo }}</span>
                             </div>
                         </td>
-                        <td style="color: #9ca3af;">{{ acceso.usuario.email }}</td>
+                        <td style="color: var(--text-muted);">{{ acceso.usuario.email }}</td>
                         <td>
                             {% if acceso.tipo_acceso == 'entrada' %}
                             <span class="badge-custom badge-success-custom">
@@ -141,12 +141,12 @@
                             </span>
                             {% endif %}
                         </td>
-                        <td style="font-family: monospace; font-size: 0.95rem;">{{ acceso.fecha_hora|date:"H:i:s" }}</td>
-                        <td style="color: #9ca3af; font-size: 0.9rem;">{{ acceso.fecha_hora|date:"d/m/Y" }}</td>
+                        <td style="font-family: monospace; font-size: 0.95rem; color: var(--text-main);">{{ acceso.fecha_hora|date:"H:i:s" }}</td>
+                        <td style="color: var(--text-muted); font-size: 0.9rem;">{{ acceso.fecha_hora|date:"d/m/Y" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem; color: #9ca3af;">
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
                             <i class="fas fa-clock" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                             <p>No hay registros de acceso recientes</p>
                         </td>
@@ -172,21 +172,21 @@
                             <tr class="fade-in-up">
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <div style="width: 32px; height: 32px; background: var(--gradient-tech); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem;">
+                                        <div style="width: 32px; height: 32px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem;">
                                             ${acceso.usuario.charAt(0)}
                                         </div>
-                                        <span style="font-weight: 500;">${acceso.usuario}</span>
+                                        <span style="font-weight: 500; color: var(--text-main);">${acceso.usuario}</span>
                                     </div>
                                 </td>
-                                <td style="color: #9ca3af;">${acceso.email}</td>
+                                <td style="color: var(--text-muted);">${acceso.email}</td>
                                 <td>
                                     <span class="badge-custom ${acceso.tipo_acceso === 'Entrada' ? 'badge-success-custom' : 'badge-danger-custom'}">
                                         <i class="fas fa-arrow-${acceso.tipo_acceso === 'Entrada' ? 'right' : 'left'}" style="transform: rotate(45deg);"></i> 
                                         ${acceso.tipo_acceso}
                                     </span>
                                 </td>
-                                <td style="font-family: monospace; font-size: 0.95rem;">${acceso.hora}</td>
-                                <td style="color: #9ca3af; font-size: 0.9rem;">${acceso.fecha}</td>
+                                <td style="font-family: monospace; font-size: 0.95rem; color: var(--text-main);">${acceso.hora}</td>
+                                <td style="color: var(--text-muted); font-size: 0.9rem;">${acceso.fecha}</td>
                             </tr>
                         `).join('');
                     }

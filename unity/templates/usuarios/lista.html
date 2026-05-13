@@ -12,7 +12,7 @@
             </div>
             <h1 class="card-title-custom text-gradient">Gestión de Usuarios</h1>
         </div>
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; margin: 0;">
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin: 0;">
             Administra y supervisa todos los usuarios del sistema Unity Access.
         </p>
     </div>
@@ -60,7 +60,7 @@
             </div>
             <h2 class="card-title-custom">
                 Usuarios Registrados 
-                <span style="color: var(--accent-color); font-weight: 400;">({{ usuarios.count }} total)</span>
+                <span style="color: var(--primary-color); font-weight: 400;">({{ usuarios.count }} total)</span>
             </h2>
         </div>
 
@@ -81,14 +81,14 @@
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <div style="width: 50px; height: 50px; background: var(--gradient-tech); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                                    <div style="width: 50px; height: 50px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
                                         {{ usuario.nombres|first }}{{ usuario.apellidos|first }}
                                     </div>
                                     <div>
-                                        <div style="font-weight: 600; color: var(--white); font-size: 1rem;">
+                                        <div style="font-weight: 600; color: var(--text-main); font-size: 1rem;">
                                             {{ usuario.nombre_completo }}
                                         </div>
-                                        <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">
+                                        <div style="font-size: 0.85rem; color: var(--text-muted);">
                                             ID: {{ usuario.id }}
                                         </div>
                                     </div>
@@ -96,12 +96,12 @@
                             </td>
                             <td>
                                 <div>
-                                    <div style="color: var(--white); margin-bottom: 0.25rem;">
-                                        <i class="fas fa-envelope" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+                                    <div style="color: var(--text-main); margin-bottom: 0.25rem;">
+                                        <i class="fas fa-envelope" style="color: var(--primary-color); margin-right: 0.5rem;"></i>
                                         {{ usuario.email }}
                                     </div>
-                                    <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
-                                        <i class="fas fa-phone" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+                                    <div style="color: var(--text-muted); font-size: 0.9rem;">
+                                        <i class="fas fa-phone" style="color: var(--primary-color); margin-right: 0.5rem;"></i>
                                         {{ usuario.telefono|default:"Sin teléfono" }}
                                     </div>
                                 </div>
@@ -119,9 +119,9 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            <td style="color: rgba(255, 255, 255, 0.8);">
+                            <td style="color: var(--text-main);">
                                 {{ usuario.fecha_registro|date:"d/m/Y" }}
-                                <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5);">
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">
                                     {{ usuario.fecha_registro|date:"H:i" }}
                                 </div>
                             </td>
@@ -194,11 +194,11 @@
             {% endif %}
 
         {% else %}
-            <div style="text-align: center; padding: 4rem 2rem; color: rgba(255, 255, 255, 0.6);">
-                <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--accent-color);">
+            <div style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+                <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--primary-color);">
                     <i class="fas fa-users-slash"></i>
                 </div>
-                <h3 style="color: var(--white); margin-bottom: 1rem;">No se encontraron usuarios</h3>
+                <h3 style="color: var(--text-main); margin-bottom: 1rem;">No se encontraron usuarios</h3>
                 <p style="margin-bottom: 2rem; font-size: 1.1rem;">
                     {% if request.GET.estado or request.GET.buscar %}
                         No hay usuarios que coincidan con los filtros aplicados.
